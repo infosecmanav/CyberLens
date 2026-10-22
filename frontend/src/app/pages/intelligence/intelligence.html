@@ -1,0 +1,104 @@
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">NORMALIZED COLLECTION</span>
+    <h1>Intelligence search</h1>
+    <p>Normalize an entity, query applicable public sources, and preserve each result with its provenance.</p>
+  </div>
+  <a routerLink="/sources">Review source registry <span>→</span></a>
+</section>
+
+<section class="search-panel">
+  <form (submit)="submit($event)">
+    <label class="indicator-field">
+      <span>Indicator or entity</span>
+      <input
+        type="text"
+        autocomplete="off"
+        placeholder="CVE-2021-44228, example.org, 203.0.113.10…"
+        [value]="value()"
+        (input)="updateValue($event)"
+      />
+    </label>
+    <label class="type-field">
+      <span>Type</span>
+      <select [value]="entityType()" (change)="updateType($event)">
+        @for (type of entityTypes; track type) {
+          <option [value]="type">{{ friendly(type) }}</option>
+        }
+      </select>
+    </label>
+    <button type="submit" [disabled]="loading() || !value().trim()">
+      {{ loading() ? 'Collecting…' : 'Run lookup' }}
+    </button>
+  </form>
+  <label class="demo-toggle">
+    <input type="checkbox" [checked]="includeDemo()" (change)="updateDemo($event)" />
+    Include the local demonstration connector
+  </label>
+  <p class="safety-note">ThreatLens calls fixed provider endpoints only. Submitted URL entities are normalized and never fetched directly.</p>
+</section>
+
+@if (error()) {
+  <div class="error-banner" role="alert">{{ error() }}</div>
+}
+
+@if (result(); as lookup) {
+  <section class="entity-card">
+    <div>
+      <span class="type-badge">{{ friendly(lookup.entity.entity_type) }}</span>
+      <h2>{{ lookup.entity.normalized_value }}</h2>
+      <p>Canonical entity · persisted {{ lookup.entity.created_at | date: 'medium' }}</p>
+    </div>
+    <span class="job-status" [class.partial]="lookup.status !== 'COMPLETED'">{{ friendly(lookup.status) }}</span>
+  </section>
+
+  <div class="result-grid">
+    <section class="panel">
+      <header><div><span>COLLECTION</span><h2>Source outcomes</h2></div><small>{{ lookup.results.length }} attempted</small></header>
+      @if (lookup.results.length === 0) {
+        <div class="empty-state">No implemented connector supports this entity type yet. The canonical entity was still saved.</div>
+      } @else {
+        <div class="source-results">
+          @for (source of lookup.results; track source.source_id) {
+            <article>
+              <div><strong>{{ source.source_id }}</strong><small>{{ source.message || (source.observation_ids.length + ' persisted observation(s)') }}</small></div>
+              <span class="outcome" [class.healthy]="isHealthy(source.outcome)">{{ friendly(source.outcome) }}</span>
+              @if (source.raw_reference) { <a [href]="source.raw_reference" target="_blank" rel="noopener noreferrer" aria-label="Open source reference">↗</a> }
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <header><div><span>PROVENANCE</span><h2>Persisted observations</h2></div><small>{{ observations().length }} records</small></header>
+      @if (observations().length === 0) {
+        <div class="empty-state">No source observations were returned. This does not mean the entity is benign.</div>
+      } @else {
+        <div class="observations">
+          @for (observation of observations(); track observation.id) {
+            <article>
+              <div class="observation-meta"><span>{{ observation.source_id }}</span><time>{{ observation.observed_at | date: 'mediumDate' }}</time></div>
+              <strong>{{ friendly(observation.observation_type) }}</strong>
+              <p>{{ observation.summary }}</p>
+              @if (observation.source_reference) { <a [href]="observation.source_reference" target="_blank" rel="noopener noreferrer">View source ↗</a> }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  </div>
+}
+
+@if (!result() && recent().length) {
+  <section class="recent-panel">
+    <header><div><span>WORKSPACE</span><h2>Recent canonical entities</h2></div></header>
+    <div class="recent-list">
+      @for (entity of recent(); track entity.id) {
+        <button type="button" (click)="useRecent(entity)">
+          <span>{{ friendly(entity.entity_type) }}</span><strong>{{ entity.normalized_value }}</strong><small>Use in search →</small>
+        </button>
+      }
+    </div>
+  </section>
+}

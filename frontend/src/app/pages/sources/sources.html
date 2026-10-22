@@ -1,0 +1,29 @@
+<section class="page-heading">
+  <div><span class="eyebrow">INTELLIGENCE ECOSYSTEM</span><h1>Source registry</h1><p>Every provider is visible, including sources that still require documentation review, credentials, licensing checks, or implementation.</p></div>
+  <span class="catalog-count">{{ sources().length }} registered</span>
+</section>
+<section class="filters" aria-label="Source filters">
+  <label><span>Search</span><input type="search" placeholder="Provider or source ID" [value]="query()" (input)="updateQuery($event)" /></label>
+  <label><span>Category</span><select [value]="selectedCategory()" (change)="updateCategory($event)">@for (category of categories(); track category) { <option [value]="category">{{ friendlyStatus(category) }}</option> }</select></label>
+  <div class="legend"><i></i> Status reflects verified implementation state</div>
+</section>
+<section class="table-panel">
+  @if (loading()) { <div class="empty-state">Loading source registry…</div> }
+  @else if (error()) { <div class="empty-state error">The source API could not be reached. Confirm the backend is running.</div> }
+  @else if (filteredSources().length === 0) { <div class="empty-state">No sources match these filters.</div> }
+  @else {
+    <div class="table-scroll"><table>
+      <thead><tr><th>Source</th><th>Category</th><th>Access</th><th>Implementation</th><th>Health</th><th>Configuration</th></tr></thead>
+      <tbody>@for (source of filteredSources(); track source.source_id) {
+        <tr>
+          <td><strong>{{ source.name }}</strong><small>{{ source.source_id }}</small></td>
+          <td><span class="category">{{ friendlyStatus(source.category) }}</span></td>
+          <td>{{ friendlyStatus(source.access_method) }}</td>
+          <td><span class="status" [class.ready]="source.implementation_status === 'IMPLEMENTED_AND_TESTED'">{{ friendlyStatus(source.implementation_status) }}</span></td>
+          <td><span class="health" [class.healthy]="source.health_status === 'HEALTHY'"><i></i>{{ friendlyStatus(source.health_status) }}</span></td>
+          <td>@if (source.environment_variables.length) { <span class="key-needed">{{ source.environment_variables.length }} key{{ source.environment_variables.length === 1 ? '' : 's' }} later</span> } @else { <span class="no-key">No key declared</span> }</td>
+        </tr>
+      }</tbody>
+    </table></div>
+  }
+</section>

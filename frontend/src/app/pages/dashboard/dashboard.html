@@ -1,0 +1,32 @@
+<section class="page-heading">
+  <div><span class="eyebrow">ANALYST OVERVIEW</span><h1>Good morning. Your workspace is ready.</h1><p>Foundation services are online. External intelligence remains clearly separated from local demonstration data.</p></div>
+  <a class="primary-action" routerLink="/investigations">New investigation <span>→</span></a>
+</section>
+<section class="metrics" aria-label="Workspace metrics">
+  <article><span class="metric-icon cyan">◈</span><div><strong>{{ sources().length || '—' }}</strong><span>Catalogued sources</span></div><small>Complete provider inventory</small></article>
+  <article><span class="metric-icon green">✓</span><div><strong>{{ configured() }}</strong><span>Implemented & tested</span></div><small>Local fixtures only in Phase 1</small></article>
+  <article><span class="metric-icon amber">◇</span><div><strong>{{ awaitingReview() || '—' }}</strong><span>Pending provider review</span></div><small>Access and licensing unverified</small></article>
+  <article><span class="metric-icon blue">◎</span><div><strong>0</strong><span>Live findings</span></div><small>No fabricated intelligence</small></article>
+</section>
+<section class="dashboard-grid">
+  <article class="panel activity-panel">
+    <header><div><span class="eyebrow">WORKSPACE ACTIVITY</span><h2>Foundation status</h2></div><span class="live-pill"><i></i> Live</span></header>
+    @if (loading()) { <div class="state-message">Loading the source registry…</div> }
+    @else if (error()) { <div class="state-message error">The API is unavailable. Start the backend to load current state.</div> }
+    @else {
+      <div class="timeline">
+        <div><span class="timeline-dot green"></span><div><strong>Source catalogue initialized</strong><p>{{ sources().length }} unique sources registered with truthful implementation state.</p></div><time>Phase 1</time></div>
+        <div><span class="timeline-dot cyan"></span><div><strong>Connector contract ready</strong><p>Capability routing, bounded concurrency, timeouts, and explicit outcomes are available.</p></div><time>Phase 1</time></div>
+        <div><span class="timeline-dot blue"></span><div><strong>Evidence schema prepared</strong><p>Entities, observations, evidence, provenance, and relationships are separate persisted concepts.</p></div><time>Phase 1</time></div>
+        <div><span class="timeline-dot muted"></span><div><strong>External collection pending</strong><p>Provider access will be verified and implemented during Phase 2.</p></div><time>Next</time></div>
+      </div>
+    }
+  </article>
+  <article class="panel readiness-panel">
+    <header><div><span class="eyebrow">READINESS</span><h2>Platform foundation</h2></div></header>
+    <div class="readiness-score"><strong>6</strong><span>/ 6</span><small>foundation capabilities</small></div>
+    <ul><li><span>FastAPI application</span><b>Ready</b></li><li><span>PostgreSQL migrations</span><b>Ready</b></li><li><span>Authentication core</span><b>Ready</b></li><li><span>Source registry</span><b>Ready</b></li><li><span>Angular shell</span><b>Ready</b></li><li><span>Local test fixtures</span><b>Ready</b></li></ul>
+    <a routerLink="/sources">Review source health <span>→</span></a>
+  </article>
+</section>
+<section class="notice"><span>i</span><div><strong>Phase 1 boundary</strong><p>No external provider is shown as working until its documentation, access terms, connector behavior, and live credentials are verified.</p></div></section>

@@ -1,0 +1,35 @@
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import {
+  EntityListResponse,
+  IntelligenceObservation,
+  LookupResponse,
+} from './intelligence.models';
+
+export interface LookupPayload {
+  value: string;
+  entity_type?: string;
+  include_demo: boolean;
+}
+
+@Injectable({ providedIn: 'root' })
+export class IntelligenceService {
+  private readonly http = inject(HttpClient);
+
+  lookup(payload: LookupPayload): Observable<LookupResponse> {
+    return this.http.post<LookupResponse>('/api/v1/intelligence/lookup', payload);
+  }
+
+  observations(entityId: string): Observable<IntelligenceObservation[]> {
+    return this.http.get<IntelligenceObservation[]>(
+      `/api/v1/intelligence/entities/${entityId}/observations`,
+    );
+  }
+
+  recent(): Observable<EntityListResponse> {
+    return this.http.get<EntityListResponse>('/api/v1/intelligence/entities', {
+      params: { limit: 8 },
+    });
+  }
+}

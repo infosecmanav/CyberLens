@@ -1,0 +1,76 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: threatlens
+      POSTGRES_USER: threatlens
+      POSTGRES_PASSWORD: threatlens
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U threatlens -d threatlens"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      secrets:
+        - proxy_ca
+    environment:
+      APP_ENV: development
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-development-only-change-me}
+      DATABASE_URL: postgresql+asyncpg://threatlens:threatlens@db:5432/threatlens
+      FRONTEND_URL: http://localhost:4200
+      SEED_SOURCE_CATALOG: "true"
+      SSL_CERT_FILE: /run/secrets/proxy_ca
+    secrets:
+      - proxy_ca
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3).read()",
+        ]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      secrets:
+        - proxy_ca
+    environment:
+      NG_CLI_ANALYTICS: "false"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "4200:4200"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  frontend-node-modules:
+
+secrets:
+  proxy_ca:
+    file: ${CODEX_PROXY_CERT:-/etc/ssl/certs/ca-certificates.crt}
+

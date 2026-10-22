@@ -1,0 +1,5 @@
+* { box-sizing: border-box; }
+html { min-width: 320px; min-height: 100%; background: #f4f7fa; }
+body { min-height: 100%; margin: 0; color: #29475b; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+button, input, select { font-family: inherit; }
+::selection { color: #082017; background: #83edcd; }

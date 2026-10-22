@@ -1,0 +1,33 @@
+<div class="app-shell">
+  <aside class="sidebar" [class.sidebar-open]="menuOpen()">
+    <a class="brand" routerLink="/" (click)="closeMenu()">
+      <span class="brand-mark" aria-hidden="true">TL</span>
+      <span><strong>ThreatLens</strong><small>Intelligence workspace</small></span>
+    </a>
+    <nav aria-label="Primary navigation">
+      @for (item of navigation; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/' }" (click)="closeMenu()">
+          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>{{ item.label }}
+          @if (item.badge) { <span class="nav-badge">{{ item.badge }}</span> }
+        </a>
+      }
+    </nav>
+    <div class="sidebar-footer">
+      <span class="status-dot"></span>
+      <span><strong>Collection environment</strong><small>Phase 2 · Development</small></span>
+    </div>
+  </aside>
+  @if (menuOpen()) { <button class="scrim" aria-label="Close navigation" (click)="closeMenu()"></button> }
+  <main>
+    <header class="topbar">
+      <button class="menu-button" aria-label="Open navigation" (click)="toggleMenu()">☰</button>
+      <div class="search-shell">
+        <span aria-hidden="true">⌕</span>
+        <input aria-label="Search intelligence" placeholder="Search an IOC, CVE, campaign, or report" />
+        <kbd>⌘ K</kbd>
+      </div>
+      <div class="topbar-actions"><button class="icon-button" aria-label="Notifications">◌</button><span class="avatar" aria-label="Current user">AN</span></div>
+    </header>
+    <div class="content"><router-outlet /></div>
+  </main>
+</div>
