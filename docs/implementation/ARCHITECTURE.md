@@ -2,39 +2,46 @@
 
 ## Runtime shape
 
-ThreatLens is a monorepo with three current runtime components:
-
 ```text
-Angular browser app
-       │ /api
-       ▼
-FastAPI application
-       │ async SQLAlchemy
-       ▼
-PostgreSQL
+Angular analyst workspace
+          │ /api/v1
+          ▼
+FastAPI routes and RBAC
+          │
+          ├── connector manager ── verified remote sources
+          ├── investigation planner and executor
+          ├── correlation and similarity
+          └── monitoring scheduler
+          │ async SQLAlchemy
+          ▼
+PostgreSQL and Alembic
 ```
 
-FastAPI owns credentials, provider calls, normalization, authorization, and persistence. Provider secrets must never reach the browser. Angular consumes typed API responses and presents missing-key, unsupported, unavailable, and quota-limited states distinctly.
+FastAPI owns provider credentials, normalization, authorization, collection policy, budgets, and persistence. Provider secrets never reach Angular. The first registered user is an administrator; later users are analysts. Read routes expose current workspace state, while collection and operational mutations require an authenticated analyst. Production validation and approval resolution require an administrator.
 
 ## Backend boundaries
 
-- `app/api`: versioned HTTP routes and request dependencies.
-- `app/core`: environment configuration and security primitives.
+- `app/api`: versioned routes, request validation, RBAC dependencies, and response schemas.
+- `app/core`: environment settings and security primitives.
 - `app/db`: declarative metadata and async database lifecycle.
-- `app/models`: persisted users, sources, entities, provenance, evidence, and relationships.
-- `app/intelligence/catalog.py`: canonical source inventory. Inventory does not imply implementation.
-- `app/intelligence/connectors`: provider-neutral contracts, capability routing, execution limits, and normalized outcomes.
-- `app/intelligence/normalization`: reserved boundary for Phase 2 canonicalization.
+- `app/models`: users, intelligence lineage, investigations, detections, cases, approvals, monitoring, and audit records.
+- `app/intelligence`: catalogue, normalization, connector contracts, capability routing, limits, caching, and explicit outcomes.
+- `app/investigations`: deterministic planning and idempotent step execution.
+- `app/correlation`: bounded graph traversal and transparent Jaccard similarity.
+- `app/operations`: audit emission, default playbook seeding, and monitoring execution.
 
-Every connector declares capabilities. The manager selects providers by operation and entity type rather than calling every provider. Failures return explicit outcomes; a missing credential, timeout, or empty response is never interpreted as evidence that an entity is benign.
+## Investigation flow
+
+Each investigation receives the same five ordered phases: planning, collection, enrichment, correlation, and assessment. Objective text is stored as untrusted analyst context; it cannot add tools or alter the planner. Runtime, request, entity, graph, pivot, report, and cost budgets are persisted with usage. A failed or exhausted step enters an explicit error or analyst-waiting state and can resume without repeating completed work.
+
+Connector results become observations before an analyst or engine promotes them to evidence. Findings cite evidence. Assessments store source coverage, corroboration, temporal relevance, and analytical consistency separately instead of compressing them into an unexplained score. Similarity records shared factors and states that overlap does not prove attribution.
+
+## Operational controls
+
+Detection candidates require existing evidence and documented telemetry, false positives, assumptions, and limits. Cases and playbooks emit audit events. All task and playbook execution is dry-run. High-impact work enters `WAITING_APPROVAL`; only an administrator can resolve its approval record.
+
+Monitoring uses an in-process scheduler for a single-instance development deployment. Each run fingerprints current source-backed state. The first result creates a baseline, matching fingerprints create non-actionable duplicate records, and relationship changes create actionable records. A multi-instance deployment should move scheduling and rate-limit state to durable infrastructure.
 
 ## Trust boundaries
 
-Remote intelligence, reports, and provider errors are untrusted input. Raw data is retained as provenance but does not acquire application authority. Active scans, URL submissions, malware downloads, destructive response actions, and paid operations remain disabled unless an explicit later policy permits them.
-
-JWT authentication provides the Phase 1 identity boundary. Later phases will add administrative user provisioning, fine-grained authorization, session controls, and comprehensive audit emission.
-
-## Evolution
-
-Phase 2 adds verified connectors, normalization, caching, rate limits, and source health without changing the base connector contract. Later phases add durable investigations, evidence correlation, graph exploration, detections, cases, playbooks, and monitoring in sequence.
-
+Remote intelligence, reports, provider failures, and investigation objectives are untrusted input. Raw responses are retained as provenance but never gain application authority. Missing, forbidden, limited, timed-out, malformed, and empty provider responses remain distinct. Active scanning, submitted-URL browsing, malware downloads, paid operations, destructive response actions, and autonomous attribution are outside the implemented boundary.

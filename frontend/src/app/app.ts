@@ -1,10 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from './core/auth.service';
 
 interface NavigationItem { path: string; label: string; icon: string; badge?: string; }
 
 @Component({ selector: 'app-root', imports: [RouterLink, RouterLinkActive, RouterOutlet], templateUrl: './app.html', styleUrl: './app.scss' })
 export class App {
+  protected readonly auth = inject(AuthService);
   protected readonly menuOpen = signal(false);
   protected readonly navigation: NavigationItem[] = [
     { path: '/', label: 'Overview', icon: '⌂' },

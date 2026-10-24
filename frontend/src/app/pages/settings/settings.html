@@ -1,0 +1,25 @@
+<section class="workspace-page auth-page">
+  <header class="workspace-heading"><div><span>ACCESS & POLICY</span><h1>Workspace settings</h1><p>Authenticate for collection and operational changes. Provider credentials remain backend-only.</p></div></header>
+  @if (auth.user(); as user) {
+    <section class="workspace-panel signed-in">
+      <div class="identity-mark">{{ user.display_name.slice(0, 2).toUpperCase() }}</div>
+      <div><span>ACTIVE SESSION</span><h2>{{ user.display_name }}</h2><p>{{ user.email }} · {{ user.role.toLowerCase() }}</p></div>
+      <button type="button" class="secondary-button" (click)="logout()">Sign out</button>
+    </section>
+    <section class="workspace-panel policy-list"><h2>Operational safeguards</h2><ul><li><b>Provider secrets</b><span>Backend environment only</span></li><li><b>Paid API budget</b><span>Zero by default</span></li><li><b>High-impact actions</b><span>Approval required · dry-run only</span></li><li><b>Access token</b><span>Held in memory and cleared on refresh</span></li></ul></section>
+    @if (user.role === 'ADMIN') { <section class="workspace-panel policy-list audit-list"><h2>Recent audit events</h2><ul>@for (event of audit(); track event.id) { <li><b>{{ event.action.replaceAll('_', ' ').toLowerCase() }}</b><span>{{ event.object_type }} · {{ event.occurred_at | date:'short' }}</span></li> } @empty { <li><span>No audit events recorded.</span></li> }</ul></section> }
+  } @else {
+    <section class="workspace-panel auth-card">
+      <div class="auth-tabs"><button [class.active]="mode() === 'login'" (click)="switchMode('login')">Sign in</button><button [class.active]="mode() === 'register'" (click)="switchMode('register')">Create account</button></div>
+      <form (submit)="submit($event)">
+        @if (mode() === 'register') { <label><span>Display name</span><input required minlength="2" [value]="displayName()" (input)="update('displayName', $event)" /></label> }
+        <label><span>Email</span><input type="email" required [value]="email()" (input)="update('email', $event)" /></label>
+        <label><span>Password</span><input type="password" required minlength="12" [value]="password()" (input)="update('password', $event)" /></label>
+        <button class="primary-button" [disabled]="loading()">{{ loading() ? 'Working…' : (mode() === 'login' ? 'Sign in' : 'Create account') }}</button>
+      </form>
+      <p class="form-note">The first account in a new workspace becomes its administrator; later accounts begin as analysts.</p>
+    </section>
+  }
+  @if (message()) { <div class="workspace-message success">{{ message() }}</div> }
+  @if (error()) { <div class="workspace-message error">{{ error() }}</div> }
+</section>

@@ -1,18 +1,21 @@
 # Testing strategy
 
-## Current checks
+## Required checks
 
-- Backend API tests run against isolated SQLite databases and cover health, registration, login, authorization, source inventory, source details, connector routing, labelled fixtures, and timeouts.
-- Alembic is upgraded against PostgreSQL and `alembic check` confirms that the migration matches ORM metadata.
-- Angular component tests use Vitest with jsdom and verify the application shell and navigation.
-- The Angular production build verifies templates, TypeScript, styles, and bundle budgets.
-- A functional startup check requests FastAPI directly and through Angular's development proxy.
+- Backend pytest runs against an isolated SQLite database and covers health, authentication, RBAC, source inventory, connector routing, normalization, deduplication, investigation execution, budget exhaustion, resume/idempotency, prompt-injection resistance, graph evidence, detection validation, approvals, dry runs, playbooks, monitoring baselines, duplicate suppression, and audit metrics.
+- Ruff and strict mypy validate every backend source module.
+- Alembic upgrades a real PostgreSQL database and `alembic check` verifies ORM/migration parity.
+- Angular tests use Vitest with jsdom. The production build checks strict templates, TypeScript, styles, route chunks, and bundle budgets.
+- Docker Compose must build all application images, reach healthy status, and satisfy representative API and frontend-proxy requests.
 
-## Connector test rule
+## Provider testing
 
-Unit tests never call provider services or consume quota. Phase 2 connectors will use captured, sanitized fixtures for success, empty results, malformed responses, authentication failures, forbidden requests, rate limits, quota exhaustion, timeouts, and schema changes. Live tests will be separately marked, bounded, and opt-in after credentials are provided.
+Automated tests do not consume provider quota. Connector tests use sanitized fixtures for success, empty results, malformed data, authentication failures, forbidden requests, rate limits, quota exhaustion, timeouts, and network failures. Live checks are bounded, opt-in, and promote a source only after the current environment verifies its documented endpoint and access terms.
 
-## Required future scenarios
+`NO_RESULT` means the provider completed the query without a matching record. It never means an entity is safe. Demonstration records are explicitly labelled and counted separately in operational metrics.
 
-The master specification's evidence conflict, deduplication, source outage, SSRF protection, budget enforcement, prompt injection resistance, analyst verdict, and detection-validation cases remain future phase requirements. Passing foundation tests does not claim those workflows exist.
+## Safety and integrity cases
 
+Tests assert that objective prompt-injection text cannot alter the deterministic plan; a zero request budget waits for an analyst; repeat runs reuse completed steps and collection jobs; high-impact tasks cannot execute before approval; completed actions remain dry-run; production detection validation requires recorded evidence; and graph output carries its attribution limitation.
+
+The current Starlette `TestClient` emits one upstream deprecation warning about its `httpx` compatibility layer. It does not change request behavior or runtime dependencies.

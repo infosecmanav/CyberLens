@@ -11,7 +11,7 @@ def test_register_login_and_current_user(client: TestClient) -> None:
         },
     )
     assert registration.status_code == 201
-    assert registration.json()["role"] == "ANALYST"
+    assert registration.json()["role"] == "ADMIN"
 
     duplicate = client.post(
         "/api/v1/auth/register",

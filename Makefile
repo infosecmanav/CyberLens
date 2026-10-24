@@ -1,20 +1,20 @@
 .PHONY: install test lint migrate dev down
 
 install:
-	python3 -m venv .venv
-	.venv/bin/pip install -e './backend[dev]'
+	cd backend && uv sync --extra dev --frozen
 	cd frontend && npm ci
 
 test:
-	.venv/bin/pytest backend
+	cd backend && uv run --extra dev pytest -q
 	cd frontend && npm test -- --watch=false
 
 lint:
-	.venv/bin/ruff check backend
+	cd backend && uv run --extra dev ruff check .
+	cd backend && uv run --extra dev mypy app
 	cd frontend && npm run build
 
 migrate:
-	cd backend && ../.venv/bin/alembic upgrade head
+	cd backend && uv run alembic upgrade head
 
 dev:
 	docker compose up --build

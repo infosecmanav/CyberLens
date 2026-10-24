@@ -16,7 +16,7 @@
       <thead><tr><th>Source</th><th>Category</th><th>Access</th><th>Implementation</th><th>Health</th><th>Configuration</th></tr></thead>
       <tbody>@for (source of filteredSources(); track source.source_id) {
         <tr>
-          <td><strong>{{ source.name }}</strong><small>{{ source.source_id }}</small></td>
+          <td><button class="source-name" (click)="inspect(source)"><strong>{{ source.name }}</strong><small>{{ source.source_id }}</small></button></td>
           <td><span class="category">{{ friendlyStatus(source.category) }}</span></td>
           <td>{{ friendlyStatus(source.access_method) }}</td>
           <td><span class="status" [class.ready]="source.implementation_status === 'IMPLEMENTED_AND_TESTED'">{{ friendlyStatus(source.implementation_status) }}</span></td>
@@ -27,3 +27,13 @@
     </table></div>
   }
 </section>
+@if (selected(); as source) {
+  <section class="source-detail" aria-label="Selected source details">
+    <header><div><span>{{ friendlyStatus(source.category) }}</span><h2>{{ source.name }}</h2><p>{{ friendlyStatus(source.implementation_status) }} · {{ friendlyStatus(source.health_status) }}</p></div><button aria-label="Close source detail" (click)="closeDetail()">×</button></header>
+    <div class="detail-grid"><article><span>Free access</span><strong>{{ source.free_access_status }}</strong></article><article><span>Commercial use</span><strong>{{ source.commercial_usage_status }}</strong></article><article><span>Last success</span><strong>{{ source.last_success ? (source.last_success | date:'short') : 'Not yet verified' }}</strong></article><article><span>Authentication</span><strong>{{ friendlyStatus(source.auth_scheme) }}</strong></article></div>
+    @if (source.last_error) { <div class="detail-error">{{ source.last_error }}</div> }
+    <h3>Configuration</h3><p>{{ source.environment_variables.length ? source.environment_variables.join(', ') : 'No credential variable declared.' }}</p>
+    <h3>Access and attribution</h3><p>{{ source.terms_and_licensing_notes || 'No additional terms note recorded.' }} {{ source.attribution_requirements || '' }}</p>
+    <h3>Verified capabilities</h3><div class="capabilities">@for (capability of source.capabilities; track capability.operation + capability.entity_type) { <span>{{ friendlyStatus(capability.operation) }} · {{ friendlyStatus(capability.entity_type) }}</span> } @empty { <p>No connector capabilities are enabled.</p> }</div>
+  </section>
+}

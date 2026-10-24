@@ -1,0 +1,58 @@
+<section class="workspace-page">
+  <header class="workspace-heading">
+    <div><span>PHASE 7</span><h1>Cases and controlled actions</h1><p>Assign operational work, record human approval, and prove that all response execution remains a dry run.</p></div>
+    <a routerLink="/playbooks" class="secondary-button">Open playbooks →</a>
+  </header>
+  @if (!auth.signedIn()) { <div class="workspace-message info">Sign in from <a routerLink="/settings">Settings</a> to manage cases.</div> }
+  @if (message()) { <div class="workspace-message success">{{ message() }}</div> }
+  @if (error()) { <div class="workspace-message error">{{ error() }}</div> }
+  <div class="case-grid">
+    <div>
+      <section class="workspace-panel">
+        <div class="panel-header"><h2>New case</h2><small>Analyst owned</small></div>
+        <form class="workspace-form" (submit)="createCase($event)">
+          <label><span>Title</span><input required [value]="title()" (input)="update('title',$event)" /></label>
+          <label><span>Summary</span><textarea required [value]="summary()" (input)="update('summary',$event)"></textarea></label>
+          <label><span>Priority</span><select [value]="priority()" (change)="update('priority',$event)"><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select></label>
+          <button class="primary-button" [disabled]="loading() || !auth.signedIn()">Create case</button>
+        </form>
+      </section>
+      <section class="workspace-panel case-list">
+        <div class="panel-header"><h2>Cases</h2><small>{{ items().length }}</small></div>
+        <div class="workspace-list">
+          @for (item of items(); track item.id) { <button [class.active]="selected()?.id === item.id" (click)="select(item)"><span class="workspace-status">{{ item.priority }} · {{ friendly(item.status) }}</span><strong>{{ item.title }}</strong><small>{{ item.summary }}</small></button> }
+          @empty { <div class="empty-workspace">No cases yet.</div> }
+        </div>
+      </section>
+    </div>
+    <section class="workspace-panel">
+      @if (selected(); as item) {
+        <div class="panel-header"><h2>{{ item.title }}</h2><small>{{ friendly(item.status) }}</small></div>
+        <form class="workspace-form task-form" (submit)="addTask($event)">
+          <label><span>Task title</span><input required [value]="taskTitle()" (input)="update('taskTitle',$event)" /></label>
+          <label><span>Description</span><textarea required [value]="taskDescription()" (input)="update('taskDescription',$event)"></textarea></label>
+          <label><span>Action type</span><input required [value]="actionType()" (input)="update('actionType',$event)" /></label>
+          <label class="impact-check"><input type="checkbox" [checked]="highImpact()" (change)="toggleImpact($event)" /> High-impact action requiring approval</label>
+          <button class="primary-button" [disabled]="loading() || !auth.signedIn()">Add task</button>
+        </form>
+        <div class="task-list">
+          @for (task of tasks(); track task.id) {
+            <article>
+              <div><span class="workspace-status" [class.good]="task.status === 'COMPLETED'" [class.warn]="task.status === 'WAITING_APPROVAL'">{{ friendly(task.status) }}</span><h3>{{ task.title }}</h3><p>{{ task.description }}</p><small>{{ friendly(task.action_type) }} · {{ task.dry_run ? 'dry run enforced' : 'not executed' }}</small></div>
+              <div class="task-actions">
+                @if (task.high_impact && task.status !== 'COMPLETED' && task.status !== 'CANCELLED') { <button class="secondary-button" (click)="requestApproval(task)" [disabled]="loading()">Request approval</button> }
+                @if (task.status !== 'COMPLETED' && task.status !== 'CANCELLED') { <button class="primary-button" (click)="execute(task)" [disabled]="loading()">Execute dry run</button> }
+              </div>
+            </article>
+          }
+          @empty { <div class="empty-workspace">Add a case task to begin controlled work.</div> }
+        </div>
+        @if (approval(); as request) {
+          <div class="approval-box"><span>HUMAN APPROVAL · {{ request.status }}</span><p>{{ request.risk_summary }}</p>
+            @if (request.status === 'PENDING' && auth.user()?.role === 'ADMIN') { <div><button class="primary-button" (click)="resolve('APPROVED')">Approve dry run</button><button class="secondary-button" (click)="resolve('REJECTED')">Reject</button></div> }
+          </div>
+        }
+      } @else { <div class="empty-workspace">Select a case to manage tasks and approvals.</div> }
+    </section>
+  </div>
+</section>

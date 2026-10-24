@@ -19,3 +19,18 @@ def client(tmp_path: object) -> Iterator[TestClient]:
     )
     with TestClient(create_app(settings)) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def auth_headers(client: TestClient) -> dict[str, str]:
+    email = "admin@example.com"
+    password = "correct horse battery staple"
+    registration = client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "display_name": "Admin Analyst", "password": password},
+    )
+    assert registration.status_code == 201
+    token = client.post(
+        "/api/v1/auth/token", data={"username": email, "password": password}
+    ).json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}

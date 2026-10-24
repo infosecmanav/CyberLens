@@ -1,25 +1,22 @@
 # ThreatLens
 
-ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. This repository is a greenfield implementation: Phase 0 (project setup) and Phase 1 (foundation) are complete, and the first Phase 2 intelligence-collection milestone is operational.
+ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. Version 1.0 delivers the complete Phase 0–8 baseline: collection, provenance, bounded investigations, graph correlation, assessments, detection engineering, cases, controlled playbooks, and continuous monitoring.
 
-## What works now
+## What works
 
-- FastAPI API with liveness/readiness checks and generated OpenAPI documentation
-- PostgreSQL persistence with an Alembic migration checked against SQLAlchemy metadata
-- JWT authentication with Argon2 password hashing and analyst roles
-- Core provenance model: sources, entities, observations, evidence, and relationships
-- Capability-aware connector interface, manager, explicit outcomes, timeouts, and bounded concurrency
-- Registry of 105 internal and industry sources with truthful implementation and health states
-- Local development fixture connector clearly labelled as demonstration-only
-- Canonical normalization for IPs, domains, URLs, hashes, email, CVEs, ASNs, certificates, network ranges, ATT&CK techniques, and named entities
-- Deduplicated entities, provider source records, observations, and persisted collection jobs
-- Read-only CISA KEV connector backed by the official public JSON dataset, with a live feed check
-- Fixture-tested OSV adapter with explicit network and provider error outcomes
-- Responsive Angular analyst shell, Intelligence search, persisted observation view, dashboard, and Source Registry
-- Docker Compose development environment and local Python/Node workflows
-- Backend and frontend automated tests
+- FastAPI, PostgreSQL, Alembic, JWT authentication, Argon2 password hashing, and analyst/admin roles.
+- A registry of 105 intelligence sources with explicit implementation and health states.
+- Canonical entity normalization, deduplicated collection, provider records, observations, and evidence.
+- A verified read-only CISA KEV public-feed connector, fixture-tested OSV adapter, and labelled local demonstration source.
+- Deterministic five-step investigation plans with request, runtime, entity, graph, report, and zero-cost budgets.
+- Resumable and idempotent investigation execution, immutable analyst decisions, evidence-backed findings, and separate confidence dimensions.
+- Bounded relationship graphs and contextual similarity with an explicit attribution limitation.
+- Evidence-gated Sigma, SPL, and KQL candidates with test and production validation states.
+- Cases, tasks, immutable audit events, nine seeded playbooks, approval gates, and dry-run-only response execution.
+- Scheduled monitoring objectives that distinguish baselines, duplicate results, and actionable material changes.
+- A responsive Angular workspace for every phase, including Cytoscape graph exploration.
 
-The CISA KEV catalogue is the only remote source currently marked as public-feed supported. OSV remains `ADAPTER_SCAFFOLDED` until its live endpoint is allowed and validated in the managed environment. All other provider rows remain conservative inventory entries.
+The CISA KEV catalogue is the only remote source currently marked as public-feed supported. OSV remains `ADAPTER_SCAFFOLDED` until its live endpoint is allowed and validated. Other catalogue entries stay conservative until their access and connector behavior are verified. Demonstration evidence is opt-in and remains labelled throughout the system.
 
 ## Run with Docker Compose
 
@@ -29,20 +26,21 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Open the Angular app at `http://localhost:4200`, the API at `http://localhost:8000`, and API documentation at `http://localhost:8000/api/docs`.
+Open the Angular app at `http://localhost:4200`, the API at `http://localhost:8000`, and the OpenAPI documentation at `http://localhost:8000/api/docs`. The PostgreSQL credentials in `compose.yaml` are for local development only.
 
-The default PostgreSQL credentials in `compose.yaml` are for local development only.
+The first registered account becomes the workspace administrator. Later accounts receive the analyst role. Tokens are kept in browser memory and are cleared by refresh or sign-out.
 
-## Run services locally
+## Run locally
 
-Requirements: Python 3.12+, Node.js 24+, npm 11+, Docker, and Docker Compose.
+Requirements: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node.js 24+, npm 11+, Docker, and Docker Compose.
 
 ```bash
-make install
+cd backend && uv sync --extra dev --frozen && cd ..
+cd frontend && npm ci && cd ..
 docker compose up -d db
 cd backend
-DATABASE_URL=postgresql+asyncpg://threatlens:threatlens@localhost:5432/threatlens ../.venv/bin/alembic upgrade head
-DATABASE_URL=postgresql+asyncpg://threatlens:threatlens@localhost:5432/threatlens APP_SECRET_KEY=local-development-secret ../.venv/bin/uvicorn app.main:app --reload
+DATABASE_URL=postgresql+asyncpg://threatlens:threatlens@localhost:5432/threatlens uv run alembic upgrade head
+DATABASE_URL=postgresql+asyncpg://threatlens:threatlens@localhost:5432/threatlens APP_SECRET_KEY=local-development-secret uv run uvicorn app.main:app --reload
 ```
 
 In another terminal:
@@ -52,33 +50,32 @@ cd frontend
 npm start
 ```
 
-The Angular development server proxies `/api` to FastAPI on port 8000.
+The Angular development server proxies `/api` to FastAPI.
 
 ## Validate
 
 ```bash
-.venv/bin/ruff check backend
-.venv/bin/pytest backend -q
-cd frontend && npm test -- --watch=false
-cd frontend && npm run build
-docker compose config --quiet
-```
-
-With PostgreSQL running, verify migration drift:
-
-```bash
 cd backend
-DATABASE_URL=postgresql+asyncpg://threatlens:threatlens@localhost:5432/threatlens ../.venv/bin/alembic check
+uv run --extra dev ruff check .
+uv run --extra dev mypy app
+uv run --extra dev pytest -q
+DATABASE_URL=postgresql+asyncpg://threatlens:threatlens@localhost:5432/threatlens uv run alembic check
+cd ../frontend
+npm test -- --watch=false
+npm run build
+cd ..
+docker compose config --quiet
 ```
 
 ## Repository structure
 
 ```text
-backend/                  FastAPI, SQLAlchemy, Alembic, connectors, tests
+backend/                  FastAPI, SQLAlchemy, Alembic, connectors, engines, and tests
 frontend/                 Angular analyst application
-docs/implementation/      Architecture, data model, tests, and phase report
-compose.yaml              PostgreSQL and application development services
+docs/implementation/      Architecture, data model, testing, and phase reports
+docs/SOURCE_MATRIX.md      Truthful provider inventory
+compose.yaml              PostgreSQL and development services
 .env.example              Non-secret configuration and credential checklist
 ```
 
-See [Phase 0–1 report](docs/implementation/PHASE_0_1_REPORT.md), [Phase 2 milestone report](docs/implementation/PHASE_2_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), and [source matrix](docs/SOURCE_MATRIX.md).
+See the [Phase 3–8 report](docs/implementation/PHASE_3_8_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), [testing strategy](docs/implementation/TESTING_STRATEGY.md), and [source matrix](docs/SOURCE_MATRIX.md).

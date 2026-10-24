@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 
-from app.api.dependencies import DatabaseSession
+from app.api.dependencies import AnalystUser, DatabaseSession
 from app.intelligence.collection import collect_entity
 from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.normalization import NormalizationError, normalize_entity
@@ -43,7 +43,9 @@ async def lookup(
     payload: LookupRequest,
     request: Request,
     session: DatabaseSession,
+    user: AnalystUser,
 ) -> LookupResponse:
+    del user
     normalized = _normalize(payload)
     manager: ConnectorManager = request.app.state.connector_manager
     registered = {connector.manifest.source_id for connector in manager.registry.all()}

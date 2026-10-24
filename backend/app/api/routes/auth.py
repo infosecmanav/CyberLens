@@ -2,11 +2,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.api.dependencies import CurrentUser, DatabaseSession
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models import User
+from app.models.enums import UserRole
 from app.schemas.auth import RegisterRequest, TokenResponse, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -17,10 +18,12 @@ async def register(payload: RegisterRequest, session: DatabaseSession) -> User:
     email = payload.email.lower()
     if await session.scalar(select(User.id).where(User.email == email)):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
+    user_count = await session.scalar(select(func.count(User.id)))
     user = User(
         email=email,
         display_name=payload.display_name.strip(),
         hashed_password=hash_password(payload.password),
+        role=UserRole.ADMIN if not user_count else UserRole.ANALYST,
     )
     session.add(user)
     await session.commit()

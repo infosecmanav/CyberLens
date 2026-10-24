@@ -1,23 +1,22 @@
 # ThreatLens data model
 
-The initial migration establishes the concepts required to preserve source lineage.
+The schema preserves the path from source retrieval to analyst action. An entity is not an observation; an observation is not automatically evidence; evidence does not automatically establish a finding, detection, or attribution.
 
-| Model | Purpose |
-| --- | --- |
-| `User` | Analyst identity, role, active state, and password hash |
-| `Source` | Provider inventory, access metadata, configuration names, implementation state, and health |
-| `SourceCapability` | Operation/entity support verified for one source |
-| `Entity` | Canonical object such as a domain, hash, CVE, ASN, campaign, or ATT&CK technique |
-| `CollectionJob` | One bounded connector run for a canonical entity, including requested sources and explicit outcome counts |
-| `SourceRecord` | Deduplicated provider record with its retrieval time, original JSON, content hash, publication time, and source reference |
-| `Observation` | What one source observed about one entity, with dates and raw lineage |
-| `Evidence` | An observation used to support, conflict with, or contextualize an analytical claim |
-| `EntityRelationship` | Typed, temporal link between two entities, optionally backed by evidence |
-| `AuditEvent` | Immutable action record boundary for later operations |
+| Area | Models | Purpose |
+| --- | --- | --- |
+| Access | `User` | Analyst identity, role, active state, and password hash |
+| Sources | `Source`, `SourceCapability` | Provider inventory, access requirements, capabilities, implementation state, and health |
+| Collection | `Entity`, `CollectionJob`, `SourceRecord`, `Observation`, `Evidence` | Canonical objects, bounded runs, deduplicated provider data, observations, and claim-level support/conflict/context |
+| Correlation | `EntityRelationship`, `SimilarityScore` | Typed links with provenance and uncertainty; transparent shared-factor similarity |
+| Investigation | `Investigation`, `InvestigationEntity`, `InvestigationStep`, `InvestigationEvent` | Durable plans, roles, execution state, budgets, attempts, and timeline |
+| Analysis | `Finding`, `FindingEvidence`, `Assessment`, `AssessmentEvidence`, `AnalystDecision` | Evidence-backed claims, separate confidence dimensions, limitations, and immutable human verdict history |
+| Detection | `DetectionCandidate`, `DetectionValidation` | Evidence-linked rule drafts, telemetry assumptions, false positives, and environment-specific validation |
+| Operations | `Case`, `CaseTask`, `CaseEvidence`, `Playbook`, `PlaybookExecution`, `ApprovalRequest` | Owned work, seeded procedures, dry runs, and human approval gates |
+| Monitoring | `MonitoringObjective`, `MonitoringRun`, `IntelligenceChange` | Schedules, fingerprints, baseline/deduplication state, material changes, and acknowledgement |
+| Audit | `AuditEvent` | Append-only security and operational action records |
 
-An entity is not an observation. An observation is not automatically evidence. Evidence does not automatically establish a finding or attribution. These separations prevent provider scores and repeated upstream reports from becoming unsupported conclusions.
+`Entity` uniqueness uses entity type plus normalized value. `SourceRecord` uniqueness uses source, entity, and the SHA-256 hash of canonical provider data. Repeat lookups therefore create distinct collection jobs while reusing matching entities, provider records, and observations.
 
-`Entity` uniqueness uses the entity type and normalized value. `SourceRecord` uniqueness uses the source, entity, and SHA-256 hash of the canonical provider record. A repeated lookup therefore creates a new `CollectionJob` while reusing matching entities, source records, and observations.
+Relationships may cite evidence and always carry provenance plus uncertainty notes. Findings and assessments use join models so evidence polarity and rationale are retained. Analyst decisions supersede prior decisions instead of updating them in place. Approvals retain requester, resolver, rationale, and timestamps.
 
-Phases 3–8 will add investigations, findings, assessments, detections, cases, playbooks, approvals, and monitoring through new Alembic revisions.
-
+Migration `20261024_0003` adds the Phase 3–8 operational schema and extends relationships with provenance and uncertainty. Alembic applies it transactionally after the foundation and collection revisions.

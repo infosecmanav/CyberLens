@@ -1,0 +1,13 @@
+<section class="workspace-page">
+  <header class="workspace-heading"><div><span>PHASE 4</span><h1>Evidence graph</h1><p>Explore bounded, source-linked entity relationships. Graph proximity is context and never proof of attribution.</p></div><a routerLink="/investigations" class="secondary-button">Investigation workspace →</a></header>
+  @if (error()) { <div class="workspace-message error">{{ error() }}</div> }
+  <div class="graph-layout">
+    <section class="workspace-panel"><div class="panel-header"><h2>Investigations</h2><small>{{ investigations().length }} available</small></div><div class="workspace-list">@for (item of investigations(); track item.id) { <button (click)="load(item)" [class.active]="selected()?.id === item.id"><span class="workspace-status">{{ friendly(item.status) }}</span><strong>{{ item.title }}</strong><small>{{ item.objective }}</small></button> } @empty { <div class="empty-workspace">Create an investigation to build a graph.</div> }</div></section>
+    <section class="workspace-panel graph-panel">
+      <div class="panel-header"><h2>{{ selected()?.title || 'Threat graph' }}</h2><small>{{ data()?.nodes?.length || 0 }} nodes · {{ data()?.edges?.length || 0 }} edges</small></div>
+      <div #graphCanvas class="graph-canvas" aria-label="Investigation relationship graph"></div>
+      @if (!data()) { <div class="graph-empty">Select an investigation to render its bounded graph.</div> }
+      @if (data(); as graphData) { <div class="edge-inspector">@for (edge of graphData.edges; track edge.id) { <article><span>{{ friendly(edge.relationship_type) }}</span><strong>{{ edge.confidence === null ? 'Uncalibrated confidence' : 'Heuristic confidence ' + edge.confidence }}</strong><small>{{ edge.first_seen || 'Time not established' }} · Evidence {{ edge.evidence_id || 'not linked' }}</small><p>{{ edge.uncertainty_notes }}</p></article> } @empty { <p>No evidence-backed relationships are available for this investigation.</p> }</div><footer><span>Depth ≤ {{ graphData.max_depth }}</span><span>{{ graphData.truncated ? 'Result truncated by graph budget' : 'Within graph budget' }}</span><p>{{ graphData.limitation }}</p></footer> }
+    </section>
+  </div>
+</section>

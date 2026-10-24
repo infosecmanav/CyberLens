@@ -194,6 +194,8 @@ class EntityRelationship(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     first_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     confidence: Mapped[float | None] = mapped_column(Float)
+    provenance: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    uncertainty_notes: Mapped[str | None] = mapped_column(Text)
 
 
 class AuditEvent(UUIDPrimaryKeyMixin, Base):

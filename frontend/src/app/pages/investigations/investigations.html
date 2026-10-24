@@ -1,0 +1,40 @@
+<section class="workspace-page">
+  <header class="workspace-heading"><div><span>PHASES 3–5</span><h1>Investigation workspace</h1><p>Create auditable plans, run bounded collection, inspect evidence, and preserve analyst decisions without hiding source limitations.</p></div><a class="secondary-button" routerLink="/graph">Open threat graph →</a></header>
+  @if (!auth.signedIn()) { <div class="workspace-message info">Sign in from <a routerLink="/settings">Settings</a> to create or run investigations. Existing results remain readable.</div> }
+  @if (error()) { <div class="workspace-message error">{{ error() }}</div> }
+  <div class="workspace-grid">
+    <div>
+      <section class="workspace-panel">
+        <div class="panel-header"><h2>New investigation</h2><small>Zero paid spend</small></div>
+        <form class="workspace-form" (submit)="create($event)">
+          <label><span>Title</span><input required minlength="3" [value]="title()" (input)="update('title', $event)" /></label>
+          <label><span>Workflow</span><select [value]="workflow()" (change)="update('workflow', $event)">@for (item of workflows; track item) { <option [value]="item">{{ friendly(item) }}</option> }</select></label>
+          <label><span>Objective</span><textarea required [value]="objective()" (input)="update('objective', $event)"></textarea></label>
+          <label><span>Seed entity (optional)</span><input placeholder="IOC, CVE, domain, hash…" [value]="seed()" (input)="update('seed', $event)" /></label>
+          <label class="demo-check"><input type="checkbox" [checked]="includeDemo()" (change)="toggleDemo($event)" /> Include labelled demonstration evidence</label>
+          <button class="primary-button" [disabled]="!auth.signedIn() || loading()">Create deterministic plan</button>
+        </form>
+      </section>
+      <section class="workspace-panel investigation-list">
+        <div class="panel-header"><h2>Investigations</h2><small>{{ items().length }} total</small></div>
+        <div class="workspace-list">@for (item of items(); track item.id) { <button (click)="select(item)" [class.active]="selected()?.id === item.id"><span class="workspace-status" [class.good]="item.status === 'COMPLETED'" [class.warn]="item.status === 'WAITING_FOR_ANALYST'">{{ friendly(item.status) }}</span><strong>{{ item.title }}</strong><small>{{ item.verdict ? friendly(item.verdict) : 'No verdict yet' }} · {{ item.created_at | date: 'mediumDate' }}</small></button> } @empty { <div class="empty-workspace">No investigations yet.</div> }</div>
+      </section>
+    </div>
+    <section class="workspace-panel investigation-detail">
+      @if (selected(); as item) {
+        <header class="detail-heading"><div><span class="workspace-status" [class.good]="item.status === 'COMPLETED'">{{ friendly(item.status) }}</span><h2>{{ item.title }}</h2><p>{{ item.objective }}</p></div><div class="header-actions">@if (item.status === 'PLANNING') { <button class="primary-button" [disabled]="loading() || !auth.signedIn()" (click)="run()">{{ loading() ? 'Running…' : 'Run plan' }}</button> } @if (item.status !== 'COMPLETED' && item.status !== 'CANCELLED') { <button class="secondary-button" [disabled]="loading() || !auth.signedIn()" (click)="cancel()">Cancel</button> } @if (item.status === 'CANCELLED' || item.status === 'FAILED' || item.status === 'WAITING_FOR_ANALYST') { <button class="primary-button" [disabled]="loading() || !auth.signedIn()" (click)="resume()">Resume</button> }</div></header>
+        <nav class="workspace-tabs" aria-label="Investigation views">@for (tab of tabs; track tab) { <button [class.active]="activeTab() === tab" (click)="openTab(tab)">{{ tab }}</button> }</nav>
+        <div class="tab-content">
+          @if (activeTab() === 'overview') { <div class="summary-grid"><article><span>Verdict</span><strong>{{ item.verdict ? friendly(item.verdict) : 'pending' }}</strong></article><article><span>API usage</span><strong>{{ item.budget_usage['api_requests'] || 0 }} / {{ item.budgets['api_requests'] || 0 }}</strong></article><article><span>Paid spend</span><strong>${{ item.budget_usage['cost_usd'] || 0 }}</strong></article></div><h3>Execution plan</h3><div class="step-list">@for (step of item.steps || []; track step.id) { <article><i [class.done]="step.status === 'COMPLETED'"></i><div><span>{{ friendly(step.phase) }} · {{ friendly(step.status) }}</span><strong>{{ step.title }}</strong><p>{{ step.operational_reason }}</p></div></article> }</div>@if (item.limitations.length) { <h3>Limitations</h3><ul class="limitation-list">@for (limitation of item.limitations; track limitation) { <li>{{ limitation }}</li> }</ul> }<h3>Analyst decision</h3><form class="decision-form" (submit)="recordDecision($event)"><select [value]="decisionVerdict()" (change)="update('decisionVerdict',$event)"><option>LIKELY_MALICIOUS</option><option>SUSPICIOUS</option><option>UNKNOWN</option><option>LIKELY_BENIGN</option><option>LIKELY_FALSE_POSITIVE</option></select><input required minlength="10" placeholder="Decision rationale" [value]="decisionRationale()" (input)="update('decisionRationale',$event)" /><button class="secondary-button" [disabled]="loading() || !auth.signedIn()">Record decision</button></form> }
+          @if (activeTab() === 'findings') { @for (finding of item.findings || []; track finding.id) { <article class="finding"><span>{{ finding.severity }}</span><h3>{{ finding.title }}</h3><p>{{ finding.statement }}</p><small>{{ finding.uncertainty }}</small></article> } @empty { <div class="empty-workspace">Run the plan to create evidence-backed findings.</div> } }
+          @if (activeTab() === 'evidence') { @for (entry of evidence(); track entry.id) { <article class="finding"><span>{{ entry.source_id }} · {{ friendly(entry.polarity) }}</span><p>{{ entry.claim }}</p><small>{{ entry.uncertainty_notes }}</small></article> } @empty { <div class="empty-workspace">No evidence has been recorded.</div> } }
+          @if (activeTab() === 'timeline') { <div class="step-list">@for (event of item.events || []; track event['id']) { <article><i class="done"></i><div><span>{{ event['event_type'] }}</span><strong>{{ event['message'] }}</strong></div></article> }</div> }
+          @if (activeTab() === 'ATT&CK') { <div class="empty-workspace">ATT&CK mappings appear only when supported by behavioral evidence. None are inferred from reputation alone.</div> }
+          @if (activeTab() === 'similar') { @for (match of similar(); track match.investigation_id) { <article class="finding"><span>Similarity {{ match.score }}</span><h3>{{ match.shared_factors.join(', ') }}</h3><small>{{ match.limitation }}</small></article> } @empty { <div class="empty-workspace">No investigation shares a persisted entity. Similarity is contextual and never proves attribution.</div> } }
+          @if (activeTab() === 'detections') { <div class="empty-workspace">Detection candidates require supporting evidence and documented telemetry. <a routerLink="/detections">Review candidates →</a></div> }
+          @if (activeTab() === 'actions') { <div class="empty-workspace">Operational actions are managed through cases. High-impact actions require approval and remain dry-run. <a routerLink="/cases">Open cases →</a></div> }
+        </div>
+      } @else { <div class="empty-workspace">Select an investigation to open its workspace.</div> }
+    </section>
+  </div>
+</section>

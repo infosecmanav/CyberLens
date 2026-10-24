@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "ThreatLens"
-    app_version: str = "0.2.0"
+    app_version: str = "1.0.0"
     app_env: Literal["development", "test", "production"] = "development"
     app_secret_key: str = "development-only-change-me"
     api_v1_prefix: str = "/api/v1"
@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     access_token_minutes: int = Field(default=30, ge=5, le=1440)
     auto_create_schema: bool = False
     seed_source_catalog: bool = True
+    seed_default_playbooks: bool = True
+    monitoring_scheduler_enabled: bool = True
+    monitoring_poll_seconds: int = Field(default=60, ge=10, le=3600)
     log_level: str = "INFO"
 
     @property
