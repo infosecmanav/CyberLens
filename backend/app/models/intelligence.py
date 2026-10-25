@@ -9,6 +9,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Index,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -196,6 +197,63 @@ class EntityRelationship(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     confidence: Mapped[float | None] = mapped_column(Float)
     provenance: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     uncertainty_notes: Mapped[str | None] = mapped_column(Text)
+
+
+class ImportBatch(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "intelligence_imports"
+
+    source_id: Mapped[UUID] = mapped_column(
+        ForeignKey("sources.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    submitted_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    bundle_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    bundle_hash: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    format: Mapped[str] = mapped_column(String(40), default="STIX_2_1", nullable=False)
+    status: Mapped[str] = mapped_column(String(40), index=True, nullable=False)
+    source_reference: Mapped[str | None] = mapped_column(String(1000))
+    contract: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    received_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    accepted_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    imported_observations: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    deduplicated_observations: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_entities: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    reused_entities: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    rejected_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    skipped_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    objects: Mapped[list["ImportObjectOutcome"]] = relationship(
+        back_populates="import_batch",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="ImportObjectOutcome.object_index",
+    )
+
+
+class ImportObjectOutcome(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "intelligence_import_objects"
+    __table_args__ = (UniqueConstraint("import_batch_id", "object_index"),)
+
+    import_batch_id: Mapped[UUID] = mapped_column(
+        ForeignKey("intelligence_imports.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    object_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    external_id: Mapped[str | None] = mapped_column(String(500))
+    disposition: Mapped[str] = mapped_column(String(24), index=True, nullable=False)
+    code: Mapped[str] = mapped_column(String(80), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("entities.id", ondelete="SET NULL"), index=True
+    )
+    observation_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("observations.id", ondelete="SET NULL"), index=True
+    )
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    raw_record: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+    import_batch: Mapped[ImportBatch] = relationship(back_populates="objects")
 
 
 class AuditEvent(UUIDPrimaryKeyMixin, Base):

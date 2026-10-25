@@ -52,6 +52,7 @@ def test_stix_import_requires_authentication(client: TestClient) -> None:
         json={"bundle": load_bundle("valid_bundle.json")},
     )
     assert response.status_code == 401
+    assert client.get("/api/v1/intelligence/imports").status_code == 401
 
 
 def test_stix_import_preserves_provenance_and_reports_unsupported_objects(
@@ -67,6 +68,7 @@ def test_stix_import_preserves_provenance_and_reports_unsupported_objects(
     )
     assert response.status_code == 200
     payload = response.json()
+    assert payload["import_id"]
     assert payload["source_id"] == "manual-stix-2-1"
     assert payload["received_objects"] == 3
     assert payload["accepted_objects"] == 2
@@ -113,6 +115,7 @@ def test_stix_reimport_is_idempotent(
     assert second.status_code == 200
     assert second.json()["imported_observations"] == 0
     assert second.json()["deduplicated_observations"] == 2
+    assert first.json()["import_id"] != second.json()["import_id"]
     assert [item["observation_id"] for item in first.json()["items"]] == [
         item["observation_id"] for item in second.json()["items"]
     ]
@@ -180,3 +183,73 @@ def test_stix_import_enforces_serialized_size_limit(
     )
     assert response.status_code == 413
     assert response.json()["detail"] == "STIX bundle exceeds the 2 MiB import limit"
+
+
+def test_import_history_filters_and_quarantines_object_outcomes(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    with_issues = client.post(
+        "/api/v1/intelligence/imports/stix-bundles",
+        json={"bundle": load_bundle("valid_bundle.json")},
+        headers=auth_headers,
+    )
+    assert with_issues.status_code == 200
+    without_issues = client.post(
+        "/api/v1/intelligence/imports/stix-bundles",
+        json={
+            "bundle": {
+                "type": "bundle",
+                "id": "bundle--bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+                "objects": [],
+            }
+        },
+        headers=auth_headers,
+    )
+    assert without_issues.status_code == 200
+
+    issue_history = client.get(
+        "/api/v1/intelligence/imports?has_issues=true", headers=auth_headers
+    )
+    assert issue_history.status_code == 200
+    assert issue_history.json()["total"] == 1
+    assert issue_history.json()["items"][0]["status"] == "COMPLETED_WITH_ISSUES"
+    assert issue_history.json()["items"][0]["skipped_objects"] == 1
+
+    clean_history = client.get(
+        "/api/v1/intelligence/imports?has_issues=false", headers=auth_headers
+    )
+    assert clean_history.status_code == 200
+    assert clean_history.json()["total"] == 1
+    assert clean_history.json()["items"][0]["status"] == "COMPLETED"
+
+    completed_history = client.get(
+        "/api/v1/intelligence/imports?status=COMPLETED", headers=auth_headers
+    )
+    assert completed_history.status_code == 200
+    assert completed_history.json()["total"] == 1
+    assert completed_history.json()["items"][0]["id"] == without_issues.json()["import_id"]
+
+    detail = client.get(
+        f"/api/v1/intelligence/imports/{with_issues.json()['import_id']}",
+        headers=auth_headers,
+    )
+    assert detail.status_code == 200
+    payload = detail.json()
+    assert payload["bundle_hash"]
+    assert payload["contract"]["format"] == "STIX_2_1"
+    assert len(payload["objects"]) == 3
+    quarantined = next(
+        item for item in payload["objects"] if item["disposition"] == "SKIPPED"
+    )
+    assert quarantined["code"] == "UNSUPPORTED_OBJECT_TYPE"
+    assert quarantined["raw_record"]["type"] == "relationship"
+    accepted = next(item for item in payload["objects"] if item["disposition"] == "IMPORTED")
+    assert accepted["entity_id"]
+    assert accepted["observation_id"]
+    assert accepted["raw_record"] == {}
+
+    missing = client.get(
+        "/api/v1/intelligence/imports/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        headers=auth_headers,
+    )
+    assert missing.status_code == 404

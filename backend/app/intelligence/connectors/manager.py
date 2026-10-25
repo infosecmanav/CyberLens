@@ -1,5 +1,6 @@
 import asyncio
 
+from app.intelligence.connectors.base import BaseIntelligenceConnector
 from app.intelligence.connectors.models import (
     ConnectorOutcome,
     ConnectorRequest,
@@ -27,13 +28,17 @@ class ConnectorManager:
             *(self._safe_lookup(connector, request) for connector in connectors)
         )
 
-    async def _safe_lookup(self, connector: object, request: ConnectorRequest) -> ConnectorResult:
-        source_id = connector.manifest.source_id  # type: ignore[attr-defined]
-        timeout = connector.manifest.default_timeout_seconds  # type: ignore[attr-defined]
+    async def _safe_lookup(
+        self,
+        connector: BaseIntelligenceConnector,
+        request: ConnectorRequest,
+    ) -> ConnectorResult:
+        source_id = connector.manifest.source_id
+        timeout = connector.manifest.default_timeout_seconds
         try:
             async with self._semaphore:
                 async with asyncio.timeout(timeout):
-                    return await connector.lookup(request)  # type: ignore[attr-defined]
+                    return await connector.lookup(request)
         except TimeoutError:
             return ConnectorResult(source_id=source_id, outcome=ConnectorOutcome.TIMEOUT)
         except OSError as exc:

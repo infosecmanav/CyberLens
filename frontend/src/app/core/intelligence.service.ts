@@ -1,8 +1,10 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   EntityListResponse,
+  ImportBatchDetail,
+  ImportBatchListResponse,
   IntelligenceObservation,
   LookupResponse,
   StixImportResponse,
@@ -32,6 +34,16 @@ export class IntelligenceService {
       '/api/v1/intelligence/imports/stix-bundles',
       payload,
     );
+  }
+
+  imports(hasIssues?: boolean): Observable<ImportBatchListResponse> {
+    let params = new HttpParams().set('limit', 8);
+    if (hasIssues !== undefined) params = params.set('has_issues', hasIssues);
+    return this.http.get<ImportBatchListResponse>('/api/v1/intelligence/imports', { params });
+  }
+
+  importDetail(importId: string): Observable<ImportBatchDetail> {
+    return this.http.get<ImportBatchDetail>(`/api/v1/intelligence/imports/${importId}`);
   }
 
   observations(entityId: string): Observable<IntelligenceObservation[]> {

@@ -52,6 +52,7 @@ describe('IntelligenceService', () => {
       source_reference: 'https://example.test/collection',
     });
     request.flush({
+      import_id: 'import-id',
       bundle_id: bundle.id,
       source_id: 'manual-stix-2-1',
       received_objects: 0,
@@ -62,8 +63,45 @@ describe('IntelligenceService', () => {
       reused_entities: 0,
       rejected_objects: 0,
       skipped_objects: 0,
+      completed_at: '2026-10-25T00:00:00Z',
       items: [],
       issues: [],
+    });
+  });
+
+  it('loads import history and a persisted object-outcome report', () => {
+    service.imports(true).subscribe();
+    const history = http.expectOne(
+      (request) => request.url === '/api/v1/intelligence/imports'
+        && request.params.get('limit') === '8'
+        && request.params.get('has_issues') === 'true',
+    );
+    expect(history.request.method).toBe('GET');
+    history.flush({ items: [], total: 0, limit: 8, offset: 0 });
+
+    service.importDetail('import-id').subscribe();
+    const detail = http.expectOne('/api/v1/intelligence/imports/import-id');
+    expect(detail.request.method).toBe('GET');
+    detail.flush({
+      id: 'import-id',
+      bundle_id: 'bundle--11111111-1111-4111-8111-111111111111',
+      bundle_hash: 'a'.repeat(64),
+      source_id: 'manual-stix-2-1',
+      format: 'STIX_2_1',
+      status: 'COMPLETED',
+      source_reference: null,
+      contract: {},
+      received_objects: 0,
+      accepted_objects: 0,
+      imported_observations: 0,
+      deduplicated_observations: 0,
+      created_entities: 0,
+      reused_entities: 0,
+      rejected_objects: 0,
+      skipped_objects: 0,
+      created_at: '2026-10-25T00:00:00Z',
+      completed_at: '2026-10-25T00:00:00Z',
+      objects: [],
     });
   });
 });

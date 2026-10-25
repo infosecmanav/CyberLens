@@ -44,6 +44,8 @@ GOSINT and OpenTAXII are research references for the interoperability backlog. T
 
 Version 1.2 implements the first local interoperability boundary: an authenticated analyst can submit a bounded STIX 2.1 JSON bundle. The importer accepts a documented subset of single-IoC Indicator equality patterns, routes values through canonical normalization, stores the complete STIX object as the provider record, carries producer/marking/confidence metadata into the observation, reports unsupported or invalid objects, and emits an audit event. It performs no network requests and does not claim TAXII compatibility.
 
+Version 1.3 makes that boundary durable. Every submission creates an import batch containing the bundle hash, contract, source, submitter, counts, status, and completion time. Each object creates an ordered outcome. Imported or deduplicated outcomes link to the canonical entity and observation; rejected or skipped outcomes retain the bounded raw object and content hash as a quarantine record. Batch history is authenticated and filterable by status or the presence of issues.
+
 ## Operational controls
 
 Detection candidates require existing evidence and documented telemetry, false positives, assumptions, and limits. Cases and playbooks emit audit events. All task and playbook execution is dry-run. High-impact work enters `WAITING_APPROVAL`; only an administrator can resolve its approval record.

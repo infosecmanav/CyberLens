@@ -1,6 +1,6 @@
 # ThreatLens
 
-ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. Version 1.2 adds bounded STIX 2.1 indicator-bundle import to the enterprise analyst console, building on the complete Phase 0–8 operational baseline.
+ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. Version 1.3 adds a durable STIX import ledger and quarantined object outcomes to the bounded import workflow, building on the complete Phase 0–8 operational baseline.
 
 ## What works
 
@@ -18,6 +18,7 @@ ThreatLens is an evidence-backed cyber-threat intelligence and investigation pla
 - A light/dark theme that follows the initial system preference, persists analyst choice, and keeps graph rendering theme-aware.
 - A `Ctrl/⌘ K` command palette and a security-console dashboard whose charts use observed API metrics rather than invented trends.
 - Authenticated manual STIX 2.1 bundle import for eight IoC types, with partial-result reporting, markings, confidence, provenance, audit events, and idempotent persistence.
+- Durable import batches, filterable history, and per-object outcomes that link accepted records to evidence lineage while retaining rejected or skipped content for review.
 
 The CISA KEV catalogue is the only remote source currently marked as public-feed supported. OSV remains `ADAPTER_SCAFFOLDED` until its live endpoint is allowed and validated. Other catalogue entries stay conservative until their access and connector behavior are verified. Demonstration evidence is opt-in and remains labelled throughout the system.
 
@@ -81,4 +82,4 @@ compose.yaml              PostgreSQL and development services
 .env.example              Non-secret configuration and credential checklist
 ```
 
-See the [1.2 STIX import report](docs/implementation/ITERATION_1_2_STIX_IMPORT.md), [1.1 UI iteration report](docs/implementation/ITERATION_1_1_SECURITY_CONSOLE.md), [intelligence interoperability backlog](docs/implementation/INTELLIGENCE_INTEROPERABILITY_BACKLOG.md), [Phase 3–8 report](docs/implementation/PHASE_3_8_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), [testing strategy](docs/implementation/TESTING_STRATEGY.md), and [source matrix](docs/SOURCE_MATRIX.md).
+See the [1.3 import-ledger report](docs/implementation/ITERATION_1_3_IMPORT_LEDGER.md), [1.2 STIX import report](docs/implementation/ITERATION_1_2_STIX_IMPORT.md), [1.1 UI iteration report](docs/implementation/ITERATION_1_1_SECURITY_CONSOLE.md), [intelligence interoperability backlog](docs/implementation/INTELLIGENCE_INTEROPERABILITY_BACKLOG.md), [Phase 3–8 report](docs/implementation/PHASE_3_8_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), [testing strategy](docs/implementation/TESTING_STRATEGY.md), and [source matrix](docs/SOURCE_MATRIX.md).

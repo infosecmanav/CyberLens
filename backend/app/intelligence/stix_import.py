@@ -12,12 +12,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.intelligence.collection import get_or_create_entity
 from app.intelligence.normalization import NormalizationError, NormalizedEntity, normalize_entity
-from app.models import Entity, Observation, Source, SourceRecord
+from app.models import (
+    Entity,
+    ImportBatch,
+    ImportObjectOutcome,
+    Observation,
+    Source,
+    SourceRecord,
+)
 from app.models.enums import EntityType, SourceHealth
 from app.operations.audit import emit_audit
 
 STIX_IMPORT_SOURCE_ID = "manual-stix-2-1"
 MAX_STIX_BUNDLE_BYTES = 2 * 1024 * 1024
+STIX_IMPORT_CONTRACT: dict[str, Any] = {
+    "format": "STIX_2_1",
+    "object_types": ["indicator"],
+    "pattern_operator": "single equality",
+    "entity_types": ["IPV4", "IPV6", "DOMAIN", "URL", "EMAIL", "MD5", "SHA1", "SHA256"],
+    "maximum_objects": 500,
+    "maximum_bytes": MAX_STIX_BUNDLE_BYTES,
+}
 
 _PATTERN_MAPPINGS: tuple[tuple[re.Pattern[str], EntityType], ...] = (
     (re.compile(r"^\[\s*ipv4-addr:value\s*=\s*'((?:\\.|[^'])+)'\s*\]$"), EntityType.IPV4),
@@ -43,6 +58,7 @@ class StixIssue:
 
 @dataclass(frozen=True)
 class ParsedStixIndicator:
+    object_index: int
     external_id: str
     normalized: NormalizedEntity
     observed_at: datetime
@@ -66,12 +82,14 @@ class PersistedStixIndicator:
 
 @dataclass(frozen=True)
 class StixImportSummary:
+    import_id: UUID
     bundle_id: str
     received_objects: int
     items: list[PersistedStixIndicator]
     issues: list[StixIssue]
     created_entities: int
     reused_entities: int
+    completed_at: datetime
 
     @property
     def imported_observations(self) -> int:
@@ -129,9 +147,11 @@ def _safe_external_reference(value: object) -> str | None:
     if not isinstance(value, list):
         return None
     for item in value:
-        if not isinstance(item, dict) or not isinstance(item.get("url"), str):
+        if not isinstance(item, dict):
             continue
-        url = item["url"]
+        url = item.get("url")
+        if not isinstance(url, str):
+            continue
         parsed = urlsplit(url)
         if parsed.scheme in {"http", "https"} and parsed.hostname and not parsed.username:
             return url[:1000]
@@ -144,7 +164,7 @@ def _string_list(value: object, maximum: int = 100) -> list[str]:
     return [item[:500] for item in value[:maximum] if isinstance(item, str)]
 
 
-def _parse_indicator(item: dict[str, Any]) -> ParsedStixIndicator:
+def _parse_indicator(item: dict[str, Any], object_index: int) -> ParsedStixIndicator:
     external_id = item.get("id")
     if not isinstance(external_id, str) or _STIX_ID.fullmatch(external_id) is None:
         raise ValueError("indicator id must use the indicator--UUID form")
@@ -183,6 +203,7 @@ def _parse_indicator(item: dict[str, Any]) -> ParsedStixIndicator:
         "confidence": confidence_value,
     }
     return ParsedStixIndicator(
+        object_index=object_index,
         external_id=external_id,
         normalized=normalized,
         observed_at=observed_at,
@@ -214,7 +235,7 @@ def parse_stix_objects(
             )
             continue
         try:
-            parsed.append(_parse_indicator(item))
+            parsed.append(_parse_indicator(item, index))
         except ValueError as exc:
             issues.append(
                 StixIssue(
@@ -250,6 +271,20 @@ async def import_stix_bundle(
     reused_entity_ids: set[UUID] = set()
     retrieved_at = datetime.now(UTC)
     provenance = source_reference or f"stix:{bundle_id}"
+    bundle_record: dict[str, Any] = {"type": "bundle", "id": bundle_id, "objects": objects}
+    import_batch = ImportBatch(
+        source_id=source.id,
+        submitted_by=actor_id,
+        bundle_id=bundle_id,
+        bundle_hash=_content_hash(bundle_record),
+        format="STIX_2_1",
+        status="RUNNING",
+        source_reference=source_reference,
+        contract=STIX_IMPORT_CONTRACT,
+        received_objects=len(objects),
+    )
+    session.add(import_batch)
+    await session.flush()
 
     for indicator in parsed:
         existing_entity = await session.scalar(
@@ -321,28 +356,78 @@ async def import_stix_bundle(
                 deduplicated=deduplicated,
             )
         )
+        session.add(
+            ImportObjectOutcome(
+                import_batch_id=import_batch.id,
+                object_index=indicator.object_index,
+                external_id=indicator.external_id,
+                disposition="DEDUPLICATED" if deduplicated else "IMPORTED",
+                code=(
+                    "STIX_INDICATOR_DEDUPLICATED"
+                    if deduplicated
+                    else "STIX_INDICATOR_IMPORTED"
+                ),
+                message=(
+                    "Existing observation reused."
+                    if deduplicated
+                    else "New observation persisted."
+                ),
+                entity_id=entity.id,
+                observation_id=observation.id,
+                content_hash=content_hash,
+                raw_record={},
+            )
+        )
+
+    for issue in issues:
+        raw_record = objects[issue.object_index]
+        session.add(
+            ImportObjectOutcome(
+                import_batch_id=import_batch.id,
+                object_index=issue.object_index,
+                external_id=issue.external_id,
+                disposition=issue.disposition,
+                code=issue.code,
+                message=issue.message,
+                content_hash=_content_hash(raw_record),
+                raw_record=raw_record,
+            )
+        )
 
     source.last_checked = retrieved_at
     if items:
         source.health_status = SourceHealth.HEALTHY
         source.last_success = retrieved_at
         source.last_error = None
+    completed_at = datetime.now(UTC)
     summary = StixImportSummary(
+        import_id=import_batch.id,
         bundle_id=bundle_id,
         received_objects=len(objects),
         items=items,
         issues=issues,
         created_entities=len(created_entity_ids),
         reused_entities=len(reused_entity_ids),
+        completed_at=completed_at,
     )
+    import_batch.status = "COMPLETED_WITH_ISSUES" if issues else "COMPLETED"
+    import_batch.accepted_objects = len(summary.items)
+    import_batch.imported_observations = summary.imported_observations
+    import_batch.deduplicated_observations = summary.deduplicated_observations
+    import_batch.created_entities = summary.created_entities
+    import_batch.reused_entities = summary.reused_entities
+    import_batch.rejected_objects = summary.rejected_objects
+    import_batch.skipped_objects = summary.skipped_objects
+    import_batch.completed_at = completed_at
     emit_audit(
         session,
         actor_id=actor_id,
         action="intelligence.stix_bundle_imported",
         object_type="stix_bundle",
-        object_id=bundle_id,
+        object_id=import_batch.id,
         details={
             "source_id": STIX_IMPORT_SOURCE_ID,
+            "bundle_id": bundle_id,
             "received_objects": summary.received_objects,
             "accepted_objects": len(summary.items),
             "imported_observations": summary.imported_observations,

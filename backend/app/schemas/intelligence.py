@@ -104,6 +104,7 @@ class StixImportedObservation(BaseModel):
 
 
 class StixImportResponse(BaseModel):
+    import_id: UUID
     bundle_id: str
     source_id: str
     received_objects: int
@@ -114,5 +115,51 @@ class StixImportResponse(BaseModel):
     reused_entities: int
     rejected_objects: int
     skipped_objects: int
+    completed_at: datetime
     items: list[StixImportedObservation]
     issues: list[StixImportIssue]
+
+
+class ImportBatchSummary(BaseModel):
+    id: UUID
+    bundle_id: str
+    source_id: str
+    format: str
+    status: str
+    source_reference: str | None
+    received_objects: int
+    accepted_objects: int
+    imported_observations: int
+    deduplicated_observations: int
+    created_entities: int
+    reused_entities: int
+    rejected_objects: int
+    skipped_objects: int
+    created_at: datetime
+    completed_at: datetime | None
+
+
+class ImportBatchListResponse(BaseModel):
+    items: list[ImportBatchSummary]
+    total: int
+    limit: int
+    offset: int
+
+
+class ImportObjectOutcomeResponse(BaseModel):
+    id: UUID
+    object_index: int
+    external_id: str | None
+    disposition: str
+    code: str
+    message: str
+    entity_id: UUID | None
+    observation_id: UUID | None
+    content_hash: str
+    raw_record: dict[str, Any]
+
+
+class ImportBatchDetail(ImportBatchSummary):
+    bundle_hash: str
+    contract: dict[str, Any]
+    objects: list[ImportObjectOutcomeResponse]

@@ -1,0 +1,40 @@
+@if (available()) {
+  <section class="history">
+    <header><div><span>IMPORT LEDGER</span><h3>Recent STIX batches</h3></div><small>Durable audit history</small></header>
+    @if (loading()) {
+      <div class="history-state">Refreshing import ledger…</div>
+    } @else if (batches().length) {
+      <div class="batch-list">
+        @for (batch of batches(); track batch.id) {
+          <button type="button" (click)="inspect(batch)" [class.active]="selected()?.id === batch.id">
+            <span class="batch-state" [class.issues]="batch.rejected_objects + batch.skipped_objects > 0">{{ friendly(batch.status) }}</span>
+            <strong>{{ batch.bundle_id }}</strong>
+            <small>{{ batch.created_at | date: 'medium' }} · {{ batch.accepted_objects }}/{{ batch.received_objects }} accepted</small>
+            <b>{{ batch.imported_observations }} new · {{ batch.deduplicated_observations }} reused</b>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="history-state">No STIX import batches have been recorded yet.</div>
+    }
+
+    @if (detailLoading()) { <div class="history-state">Loading persisted outcomes…</div> }
+    @if (error()) { <div class="history-state error" role="alert">{{ error() }}</div> }
+    @if (selected(); as detail) {
+      <section class="batch-detail">
+        <header><div><span>OBJECT OUTCOMES</span><h3>{{ detail.bundle_id }}</h3></div><button type="button" (click)="close()">Close</button></header>
+        <div class="contract"><span>Contract</span><strong>{{ detail.format }}</strong><small>{{ detail.bundle_hash }}</small></div>
+        @if (detail.objects.length) {
+          <div class="outcome-list">
+            @for (item of detail.objects; track item.id) {
+              <article>
+                <span [class.rejected]="item.disposition === 'REJECTED'" [class.skipped]="item.disposition === 'SKIPPED'">{{ item.disposition }}</span>
+                <div><strong>Object {{ item.object_index + 1 }} · {{ item.code }}</strong><p>{{ item.message }}</p><small>{{ item.external_id || 'No external identifier' }}</small></div>
+              </article>
+            }
+          </div>
+        } @else { <div class="history-state">The bundle contained no objects.</div> }
+      </section>
+    }
+  </section>
+}

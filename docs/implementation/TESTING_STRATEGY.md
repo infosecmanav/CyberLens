@@ -2,7 +2,7 @@
 
 ## Required checks
 
-- Backend pytest runs against an isolated SQLite database and covers health, authentication, RBAC, source inventory, connector routing, normalization, STIX 2.1 import contracts, partial imports, provenance, deduplication, investigation execution, budget exhaustion, resume/idempotency, prompt-injection resistance, graph evidence, detection validation, approvals, dry runs, playbooks, monitoring baselines, duplicate suppression, and audit metrics.
+- Backend pytest runs against an isolated SQLite database and covers health, authentication, RBAC, source inventory, connector routing, normalization, STIX 2.1 import contracts, partial imports, provenance, deduplication, durable batch history, issue filtering, quarantined outcomes, investigation execution, budget exhaustion, resume/idempotency, prompt-injection resistance, graph evidence, detection validation, approvals, dry runs, playbooks, monitoring baselines, duplicate suppression, and audit metrics.
 - Ruff and strict mypy validate every backend source module.
 - Alembic upgrades a real PostgreSQL database and `alembic check` verifies ORM/migration parity.
 - Angular tests use Vitest with jsdom. Shell tests cover route rendering, command-palette keyboard access, and theme changes; service tests cover persisted theme behavior and intelligence requests. The production build checks strict templates, TypeScript, styles, route chunks, and bundle budgets.
@@ -13,6 +13,8 @@
 Automated tests do not consume provider quota. Connector tests use sanitized fixtures for success, empty results, malformed data, authentication failures, forbidden requests, rate limits, quota exhaustion, timeouts, and network failures. Live checks are bounded, opt-in, and promote a source only after the current environment verifies its documented endpoint and access terms.
 
 Manual STIX import fixtures are synthetic and exercise valid, partially valid, unsupported, repeated, and malformed bundles. The importer never dereferences indicator values or external references. A repeated object must return the existing observation ID; a changed object must remain separately traceable through its canonical raw-content hash.
+
+Import-ledger tests assert that repeated submissions create distinct batches, accepted outcomes link to persisted entities and observations, unsupported objects retain their raw quarantine record, history filters separate clean and issue-bearing batches, and history/detail endpoints require authentication.
 
 `NO_RESULT` means the provider completed the query without a matching record. It never means an entity is safe. Demonstration records are explicitly labelled and counted separately in operational metrics.
 

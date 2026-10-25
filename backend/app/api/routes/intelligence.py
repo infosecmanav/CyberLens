@@ -13,11 +13,15 @@ from app.intelligence.stix_import import (
     canonical_bundle_size,
     import_stix_bundle,
 )
-from app.models import Entity, Observation, Source
+from app.models import Entity, ImportBatch, Observation, Source
 from app.models.enums import EntityType
 from app.schemas.intelligence import (
     EntityListResponse,
     EntityResponse,
+    ImportBatchDetail,
+    ImportBatchListResponse,
+    ImportBatchSummary,
+    ImportObjectOutcomeResponse,
     LookupRequest,
     LookupResponse,
     LookupSourceResult,
@@ -122,6 +126,7 @@ async def import_stix(
         actor_id=user.id,
     )
     return StixImportResponse(
+        import_id=summary.import_id,
         bundle_id=summary.bundle_id,
         source_id=STIX_IMPORT_SOURCE_ID,
         received_objects=summary.received_objects,
@@ -132,6 +137,7 @@ async def import_stix(
         reused_entities=summary.reused_entities,
         rejected_objects=summary.rejected_objects,
         skipped_objects=summary.skipped_objects,
+        completed_at=summary.completed_at,
         items=[
             StixImportedObservation(
                 entity_id=item.entity_id,
@@ -152,6 +158,113 @@ async def import_stix(
                 message=issue.message,
             )
             for issue in summary.issues
+        ],
+    )
+
+
+def _import_summary(batch: ImportBatch, source_id: str) -> ImportBatchSummary:
+    return ImportBatchSummary(
+        id=batch.id,
+        bundle_id=batch.bundle_id,
+        source_id=source_id,
+        format=batch.format,
+        status=batch.status,
+        source_reference=batch.source_reference,
+        received_objects=batch.received_objects,
+        accepted_objects=batch.accepted_objects,
+        imported_observations=batch.imported_observations,
+        deduplicated_observations=batch.deduplicated_observations,
+        created_entities=batch.created_entities,
+        reused_entities=batch.reused_entities,
+        rejected_objects=batch.rejected_objects,
+        skipped_objects=batch.skipped_objects,
+        created_at=batch.created_at,
+        completed_at=batch.completed_at,
+    )
+
+
+@router.get("/imports", response_model=ImportBatchListResponse)
+async def list_imports(
+    session: DatabaseSession,
+    user: AnalystUser,
+    status_filter: str | None = Query(
+        default=None,
+        alias="status",
+        pattern="^(COMPLETED|COMPLETED_WITH_ISSUES)$",
+    ),
+    has_issues: bool | None = None,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> ImportBatchListResponse:
+    del user
+    filters = []
+    if status_filter is not None:
+        filters.append(ImportBatch.status == status_filter)
+    issue_count = ImportBatch.rejected_objects + ImportBatch.skipped_objects
+    if has_issues is True:
+        filters.append(issue_count > 0)
+    elif has_issues is False:
+        filters.append(issue_count == 0)
+    total = await session.scalar(select(func.count(ImportBatch.id)).where(*filters))
+    batches = list(
+        (
+            await session.scalars(
+                select(ImportBatch)
+                .where(*filters)
+                .order_by(ImportBatch.created_at.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+        ).all()
+    )
+    source_ids = {batch.source_id for batch in batches}
+    sources = {
+        source.id: source.source_id
+        for source in (
+            await session.scalars(select(Source).where(Source.id.in_(source_ids)))
+        ).all()
+    }
+    return ImportBatchListResponse(
+        items=[
+            _import_summary(batch, sources.get(batch.source_id, "unknown"))
+            for batch in batches
+        ],
+        total=total or 0,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/imports/{import_id}", response_model=ImportBatchDetail)
+async def get_import(
+    import_id: UUID,
+    session: DatabaseSession,
+    user: AnalystUser,
+) -> ImportBatchDetail:
+    del user
+    batch = await session.get(ImportBatch, import_id)
+    if batch is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import not found")
+    source = await session.get(Source, batch.source_id)
+    summary = _import_summary(batch, source.source_id if source else "unknown")
+    return ImportBatchDetail(
+        **summary.model_dump(),
+        bundle_hash=batch.bundle_hash,
+        contract=batch.contract,
+        objects=[
+            ImportObjectOutcomeResponse(
+                id=item.id,
+                object_index=item.object_index,
+                external_id=item.external_id,
+                disposition=item.disposition,
+                code=item.code,
+                message=item.message,
+                entity_id=item.entity_id,
+                observation_id=item.observation_id,
+                content_hash=item.content_hash,
+                raw_record=item.raw_record,
+            )
+            for item in batch.objects
         ],
     )
 

@@ -10,6 +10,8 @@ Allow analysts to import, refine, and exchange indicator intelligence through mo
 
 Version 1.2 completes the local contract portion of Slice 1 and the first vertical part of Slice 2. It adds authenticated manual STIX 2.1 JSON bundle import for a bounded set of Indicator patterns, sanitized valid and partial fixtures, canonical normalization, raw-object provenance, markings, confidence, audit events, explicit per-object issues, and idempotent persistence. Network TAXII discovery, collection polling, manifests, added-after cursors, and export remain unimplemented.
 
+Version 1.3 adds durable import batches and ordered object outcomes. Analysts can reopen an import report, filter clean and issue-bearing batches, follow accepted objects to canonical records, and review the bounded raw content of rejected or skipped objects. Criteria-based pre-import filtering and network TAXII work remain in the backlog.
+
 Upstream verification on 2026-10-25 found that OpenTAXII documents TAXII 1.0 and 1.1 support and describes the project as feature-complete with bug-fix maintenance. It does not establish TAXII 2.x or 2.1 support. Any future TAXII 2.1 client will therefore use a separately verified implementation and compatibility suite.
 
 ## Slice 1 — research and contract fixtures

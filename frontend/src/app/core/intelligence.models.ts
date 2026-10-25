@@ -62,6 +62,7 @@ export interface StixImportedObservation {
 }
 
 export interface StixImportResponse {
+  import_id: string;
   bundle_id: string;
   source_id: string;
   received_objects: number;
@@ -72,6 +73,52 @@ export interface StixImportResponse {
   reused_entities: number;
   rejected_objects: number;
   skipped_objects: number;
+  completed_at: string;
   items: StixImportedObservation[];
   issues: StixImportIssue[];
+}
+
+export interface ImportBatchSummary {
+  id: string;
+  bundle_id: string;
+  source_id: string;
+  format: string;
+  status: string;
+  source_reference: string | null;
+  received_objects: number;
+  accepted_objects: number;
+  imported_observations: number;
+  deduplicated_observations: number;
+  created_entities: number;
+  reused_entities: number;
+  rejected_objects: number;
+  skipped_objects: number;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface ImportObjectOutcome {
+  id: string;
+  object_index: number;
+  external_id: string | null;
+  disposition: string;
+  code: string;
+  message: string;
+  entity_id: string | null;
+  observation_id: string | null;
+  content_hash: string;
+  raw_record: Record<string, unknown>;
+}
+
+export interface ImportBatchDetail extends ImportBatchSummary {
+  bundle_hash: string;
+  contract: Record<string, unknown>;
+  objects: ImportObjectOutcome[];
+}
+
+export interface ImportBatchListResponse {
+  items: ImportBatchSummary[];
+  total: number;
+  limit: number;
+  offset: number;
 }

@@ -9,10 +9,11 @@ import {
   StixImportResponse,
 } from '../../core/intelligence.models';
 import { IntelligenceService } from '../../core/intelligence.service';
+import { StixImportHistory } from './stix-import-history';
 
 @Component({
   selector: 'app-intelligence',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, StixImportHistory],
   templateUrl: './intelligence.html',
   styleUrl: './intelligence.scss',
 })
