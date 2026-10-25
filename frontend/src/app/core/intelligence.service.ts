@@ -3,6 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   EntityListResponse,
+  EvidencePromotionPayload,
+  EvidencePromotionResponse,
   ImportBatchDetail,
   ImportBatchListResponse,
   IntelligenceObservation,
@@ -38,14 +40,26 @@ export class IntelligenceService {
     );
   }
 
-  imports(hasIssues?: boolean): Observable<ImportBatchListResponse> {
+  imports(hasIssues?: boolean, hasPromotions?: boolean): Observable<ImportBatchListResponse> {
     let params = new HttpParams().set('limit', 8);
     if (hasIssues !== undefined) params = params.set('has_issues', hasIssues);
+    if (hasPromotions !== undefined) params = params.set('has_promotions', hasPromotions);
     return this.http.get<ImportBatchListResponse>('/api/v1/intelligence/imports', { params });
   }
 
   importDetail(importId: string): Observable<ImportBatchDetail> {
     return this.http.get<ImportBatchDetail>(`/api/v1/intelligence/imports/${importId}`);
+  }
+
+  promoteImportObject(
+    importId: string,
+    objectOutcomeId: string,
+    payload: EvidencePromotionPayload,
+  ): Observable<EvidencePromotionResponse> {
+    return this.http.post<EvidencePromotionResponse>(
+      `/api/v1/intelligence/imports/${importId}/objects/${objectOutcomeId}/promote`,
+      payload,
+    );
   }
 
   observations(entityId: string): Observable<IntelligenceObservation[]> {

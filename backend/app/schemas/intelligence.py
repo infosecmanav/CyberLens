@@ -3,10 +3,10 @@ from datetime import datetime
 from typing import Any, Literal, Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 
 from app.intelligence.connectors.models import ConnectorOutcome
-from app.models.enums import CollectionJobStatus, EntityType
+from app.models.enums import CollectionJobStatus, EntityType, EvidencePolarity
 
 
 class NormalizeRequest(BaseModel):
@@ -166,6 +166,7 @@ class StixImportResponse(BaseModel):
     rejected_objects: int
     skipped_objects: int
     filtered_objects: int
+    promoted_objects: int
     filter_definition: dict[str, Any]
     completed_at: datetime
     items: list[StixImportedObservation]
@@ -188,6 +189,7 @@ class ImportBatchSummary(BaseModel):
     rejected_objects: int
     skipped_objects: int
     filtered_objects: int
+    promoted_objects: int
     created_at: datetime
     completed_at: datetime | None
 
@@ -208,6 +210,7 @@ class ImportObjectOutcomeResponse(BaseModel):
     message: str
     entity_id: UUID | None
     observation_id: UUID | None
+    evidence_id: UUID | None
     content_hash: str
     raw_record: dict[str, Any]
 
@@ -217,3 +220,31 @@ class ImportBatchDetail(ImportBatchSummary):
     contract: dict[str, Any]
     filter_definition: dict[str, Any]
     objects: list[ImportObjectOutcomeResponse]
+
+
+class EvidencePromotionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    polarity: EvidencePolarity
+    claim: str = Field(min_length=10, max_length=2000)
+    uncertainty_notes: str = Field(min_length=10, max_length=2000)
+
+    @field_validator("claim", "uncertainty_notes")
+    @classmethod
+    def meaningful_text(cls, value: str) -> str:
+        stripped = value.strip()
+        if len(stripped) < 10:
+            raise ValueError("promotion text must contain at least 10 non-whitespace characters")
+        return stripped
+
+
+class EvidencePromotionResponse(BaseModel):
+    evidence_id: UUID
+    import_id: UUID
+    object_outcome_id: UUID
+    observation_id: UUID
+    polarity: EvidencePolarity
+    claim: str
+    uncertainty_notes: str
+    promoted_by: UUID
+    analyst_reviewed_at: datetime

@@ -1,0 +1,12 @@
+@if (!open()) {
+  <button class="promote-button" type="button" (click)="begin()">Promote to evidence</button>
+} @else {
+  <form (submit)="submit($event)">
+    <header><strong>Analyst evidence review</strong><button type="button" (click)="cancel()">Cancel</button></header>
+    <label><span>Polarity</span><select [value]="polarity()" (change)="updatePolarity($event)"><option value="SUPPORTS">Supports</option><option value="CONFLICTS">Conflicts</option><option value="CONTEXTUAL">Contextual</option></select></label>
+    <label><span>Evidence claim</span><textarea required minlength="10" maxlength="2000" placeholder="State the bounded claim this observation supports…" [value]="claim()" (input)="updateClaim($event)"></textarea></label>
+    <label><span>Uncertainty and limits</span><textarea required minlength="10" maxlength="2000" placeholder="Record provider scope, time limits, and alternative explanations…" [value]="uncertaintyNotes()" (input)="updateUncertainty($event)"></textarea></label>
+    @if (error()) { <p role="alert">{{ error() }}</p> }
+    <button class="confirm" type="submit" [disabled]="!canSubmit()">{{ loading() ? 'Recording…' : 'Record promotion' }}</button>
+  </form>
+}

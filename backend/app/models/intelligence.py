@@ -174,6 +174,9 @@ class Evidence(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     claim: Mapped[str] = mapped_column(Text, nullable=False)
     uncertainty_notes: Mapped[str | None] = mapped_column(Text)
     analyst_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    promoted_by: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
 
 
 class EntityRelationship(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -224,6 +227,7 @@ class ImportBatch(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     rejected_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     skipped_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     filtered_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    promoted_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     objects: Mapped[list["ImportObjectOutcome"]] = relationship(
@@ -251,6 +255,9 @@ class ImportObjectOutcome(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     observation_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("observations.id", ondelete="SET NULL"), index=True
+    )
+    evidence_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("evidence.id", ondelete="SET NULL"), index=True
     )
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     raw_record: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)

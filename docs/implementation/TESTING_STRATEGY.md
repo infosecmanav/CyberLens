@@ -2,7 +2,7 @@
 
 ## Required checks
 
-- Backend pytest runs against an isolated SQLite database and covers health, authentication, RBAC, source inventory, connector routing, normalization, STIX 2.1 import contracts, partial imports, provenance, deduplication, reproducible pre-import filters, durable batch history, issue filtering, quarantined outcomes, investigation execution, budget exhaustion, resume/idempotency, prompt-injection resistance, graph evidence, detection validation, approvals, dry runs, playbooks, monitoring baselines, duplicate suppression, and audit metrics.
+- Backend pytest runs against an isolated SQLite database and covers health, authentication, RBAC, source inventory, connector routing, normalization, STIX 2.1 import contracts, partial imports, provenance, deduplication, reproducible pre-import filters, explicit evidence promotion, durable batch history, issue and promotion filters, quarantined outcomes, investigation execution, budget exhaustion, resume/idempotency, prompt-injection resistance, graph evidence, detection validation, approvals, dry runs, playbooks, monitoring baselines, duplicate suppression, and audit metrics.
 - Ruff and strict mypy validate every backend source module.
 - Alembic upgrades a real PostgreSQL database and `alembic check` verifies ORM/migration parity.
 - Angular tests use Vitest with jsdom. Shell tests cover route rendering, command-palette keyboard access, and theme changes; service tests cover persisted theme behavior and intelligence requests. The production build checks strict templates, TypeScript, styles, route chunks, and bundle budgets.
@@ -17,6 +17,8 @@ Manual STIX import fixtures are synthetic and exercise valid, partially valid, u
 Import-ledger tests assert that repeated submissions create distinct batches, accepted outcomes link to persisted entities and observations, unsupported objects retain their raw quarantine record, history filters separate clean and issue-bearing batches, and history/detail endpoints require authentication.
 
 Import-filter tests cover every supported criterion, invalid definitions, canonical persisted criteria, separate filtered counts, retained filtered raw objects, and the absence of entity or observation links on filtered outcomes. Filters run after parsing so invalid input remains rejected rather than being silently excluded.
+
+Evidence-promotion tests assert authentication, accepted-outcome eligibility, reviewer attribution, polarity and uncertainty persistence, outcome linkage, atomic promoted counts, promoted/unreviewed history filters, duplicate rejection, ineligible-outcome rejection, and immutable audit details.
 
 `NO_RESULT` means the provider completed the query without a matching record. It never means an entity is safe. Demonstration records are explicitly labelled and counted separately in operational metrics.
 

@@ -1,6 +1,9 @@
 @if (available()) {
   <section class="history">
-    <header><div><span>IMPORT LEDGER</span><h3>Recent STIX batches</h3></div><small>Durable audit history</small></header>
+    <header>
+      <div><span>IMPORT LEDGER</span><h3>Recent STIX batches</h3></div>
+      <div class="history-filters" aria-label="Filter imports by evidence promotion"><button type="button" [class.active]="promotionFilter() === 'ALL'" [attr.aria-pressed]="promotionFilter() === 'ALL'" (click)="setPromotionFilter('ALL')">All</button><button type="button" [class.active]="promotionFilter() === 'PROMOTED'" [attr.aria-pressed]="promotionFilter() === 'PROMOTED'" (click)="setPromotionFilter('PROMOTED')">Promoted</button><button type="button" [class.active]="promotionFilter() === 'UNPROMOTED'" [attr.aria-pressed]="promotionFilter() === 'UNPROMOTED'" (click)="setPromotionFilter('UNPROMOTED')">Unreviewed</button></div>
+    </header>
     @if (loading()) {
       <div class="history-state">Refreshing import ledger…</div>
     } @else if (batches().length) {
@@ -10,7 +13,7 @@
             <span class="batch-state" [class.issues]="batch.rejected_objects + batch.skipped_objects > 0">{{ friendly(batch.status) }}</span>
             <strong>{{ batch.bundle_id }}</strong>
             <small>{{ batch.created_at | date: 'medium' }} · {{ batch.accepted_objects }}/{{ batch.received_objects }} accepted</small>
-            <b>{{ batch.imported_observations }} new · {{ batch.deduplicated_observations }} reused · {{ batch.filtered_objects }} filtered</b>
+            <b>{{ batch.imported_observations }} new · {{ batch.deduplicated_observations }} reused · {{ batch.filtered_objects }} filtered · {{ batch.promoted_objects }} promoted</b>
           </button>
         }
       </div>
@@ -36,7 +39,14 @@
             @for (item of detail.objects; track item.id) {
               <article>
                 <span [class.filtered]="item.disposition === 'FILTERED'" [class.rejected]="item.disposition === 'REJECTED'" [class.skipped]="item.disposition === 'SKIPPED'">{{ item.disposition }}</span>
-                <div><strong>Object {{ item.object_index + 1 }} · {{ item.code }}</strong><p>{{ item.message }}</p><small>{{ item.external_id || 'No external identifier' }}</small></div>
+                <div>
+                  <strong>Object {{ item.object_index + 1 }} · {{ item.code }}</strong><p>{{ item.message }}</p><small>{{ item.external_id || 'No external identifier' }}</small>
+                  @if (item.evidence_id) {
+                    <b class="evidence-recorded">Evidence recorded · {{ item.evidence_id }}</b>
+                  } @else if (item.disposition === 'IMPORTED' || item.disposition === 'DEDUPLICATED') {
+                    <app-stix-evidence-promotion [importId]="detail.id" [outcomeId]="item.id" (promoted)="promotionComplete()" />
+                  }
+                </div>
               </article>
             }
           </div>

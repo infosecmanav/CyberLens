@@ -6,10 +6,11 @@ import {
   StixImportFilterDefinition,
 } from '../../core/intelligence.models';
 import { IntelligenceService } from '../../core/intelligence.service';
+import { StixEvidencePromotion } from './stix-evidence-promotion';
 
 @Component({
   selector: 'app-stix-import-history',
-  imports: [DatePipe],
+  imports: [DatePipe, StixEvidencePromotion],
   templateUrl: './stix-import-history.html',
   styleUrl: './stix-import-history.scss',
 })
@@ -22,6 +23,7 @@ export class StixImportHistory {
   protected readonly loading = signal(false);
   protected readonly detailLoading = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly promotionFilter = signal<'ALL' | 'PROMOTED' | 'UNPROMOTED'>('ALL');
 
   constructor() {
     effect(() => {
@@ -65,9 +67,23 @@ export class StixImportHistory {
     return labels;
   }
 
+  protected promotionComplete(): void {
+    const current = this.selected();
+    if (current) this.inspect(current);
+    this.load();
+  }
+
+  protected setPromotionFilter(value: 'ALL' | 'PROMOTED' | 'UNPROMOTED'): void {
+    this.promotionFilter.set(value);
+    this.selected.set(null);
+    this.load();
+  }
+
   private load(): void {
     this.loading.set(true);
-    this.intelligence.imports().subscribe({
+    const filter = this.promotionFilter();
+    const hasPromotions = filter === 'ALL' ? undefined : filter === 'PROMOTED';
+    this.intelligence.imports(undefined, hasPromotions).subscribe({
       next: (response) => {
         this.batches.set(response.items);
         this.available.set(true);

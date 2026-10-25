@@ -82,6 +82,7 @@ export interface StixImportResponse {
   rejected_objects: number;
   skipped_objects: number;
   filtered_objects: number;
+  promoted_objects: number;
   filter_definition: StixImportFilterDefinition;
   completed_at: string;
   items: StixImportedObservation[];
@@ -104,6 +105,7 @@ export interface ImportBatchSummary {
   rejected_objects: number;
   skipped_objects: number;
   filtered_objects: number;
+  promoted_objects: number;
   created_at: string;
   completed_at: string | null;
 }
@@ -117,6 +119,7 @@ export interface ImportObjectOutcome {
   message: string;
   entity_id: string | null;
   observation_id: string | null;
+  evidence_id: string | null;
   content_hash: string;
   raw_record: Record<string, unknown>;
 }
@@ -133,4 +136,19 @@ export interface ImportBatchListResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface EvidencePromotionPayload {
+  polarity: 'SUPPORTS' | 'CONFLICTS' | 'CONTEXTUAL';
+  claim: string;
+  uncertainty_notes: string;
+}
+
+export interface EvidencePromotionResponse extends EvidencePromotionPayload {
+  evidence_id: string;
+  import_id: string;
+  object_outcome_id: string;
+  observation_id: string;
+  promoted_by: string;
+  analyst_reviewed_at: string;
 }

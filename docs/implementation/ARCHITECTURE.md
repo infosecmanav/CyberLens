@@ -48,6 +48,8 @@ Version 1.3 makes that boundary durable. Every submission creates an import batc
 
 Version 1.4 applies an optional, validated filter after STIX parsing and before persistence. The filter can constrain supported entity types, minimum confidence, an inclusive `valid_from` window, and required marking references. Filtered objects create ordered `FILTERED` outcomes without creating entities or observations. Invalid objects remain rejected and unsupported objects remain skipped, so filtering cannot conceal parsing failures. The canonical filter definition and filtered count are stored with the batch and returned by the immediate and historical APIs.
 
+Version 1.5 adds the human decision boundary after collection. An authenticated analyst may promote only an imported or deduplicated outcome with a surviving observation. Promotion creates a distinct `Evidence` record with polarity, a bounded claim, explicit uncertainty, analyst identity, and review time; it never changes the upstream observation. The import outcome links to that evidence, the batch records an atomic promoted count, and an immutable audit event identifies the import, outcome, observation, and polarity. Rejected, skipped, and filtered objects cannot be promoted.
+
 ## Operational controls
 
 Detection candidates require existing evidence and documented telemetry, false positives, assumptions, and limits. Cases and playbooks emit audit events. All task and playbook execution is dry-run. High-impact work enters `WAITING_APPROVAL`; only an administrator can resolve its approval record.

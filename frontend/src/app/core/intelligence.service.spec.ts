@@ -70,6 +70,7 @@ describe('IntelligenceService', () => {
       rejected_objects: 0,
       skipped_objects: 0,
       filtered_objects: 0,
+      promoted_objects: 0,
       filter_definition: filters,
       completed_at: '2026-10-25T00:00:00Z',
       items: [],
@@ -86,6 +87,14 @@ describe('IntelligenceService', () => {
     );
     expect(history.request.method).toBe('GET');
     history.flush({ items: [], total: 0, limit: 8, offset: 0 });
+
+    service.imports(undefined, true).subscribe();
+    const promotedHistory = http.expectOne(
+      (request) => request.url === '/api/v1/intelligence/imports'
+        && request.params.get('has_promotions') === 'true',
+    );
+    expect(promotedHistory.request.method).toBe('GET');
+    promotedHistory.flush({ items: [], total: 0, limit: 8, offset: 0 });
 
     service.importDetail('import-id').subscribe();
     const detail = http.expectOne('/api/v1/intelligence/imports/import-id');
@@ -108,10 +117,32 @@ describe('IntelligenceService', () => {
       rejected_objects: 0,
       skipped_objects: 0,
       filtered_objects: 0,
+      promoted_objects: 0,
       filter_definition: {},
       created_at: '2026-10-25T00:00:00Z',
       completed_at: '2026-10-25T00:00:00Z',
       objects: [],
+    });
+
+    const promotion = {
+      polarity: 'CONTEXTUAL' as const,
+      claim: 'The reviewed indicator is relevant context.',
+      uncertainty_notes: 'Provider presence does not establish attribution.',
+    };
+    service.promoteImportObject('import-id', 'outcome-id', promotion).subscribe();
+    const promote = http.expectOne(
+      '/api/v1/intelligence/imports/import-id/objects/outcome-id/promote',
+    );
+    expect(promote.request.method).toBe('POST');
+    expect(promote.request.body).toEqual(promotion);
+    promote.flush({
+      ...promotion,
+      evidence_id: 'evidence-id',
+      import_id: 'import-id',
+      object_outcome_id: 'outcome-id',
+      observation_id: 'observation-id',
+      promoted_by: 'user-id',
+      analyst_reviewed_at: '2026-10-25T00:00:00Z',
     });
   });
 });

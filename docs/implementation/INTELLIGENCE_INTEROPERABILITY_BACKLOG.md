@@ -14,6 +14,8 @@ Version 1.3 adds durable import batches and ordered object outcomes. Analysts ca
 
 Version 1.4 completes the first vertical increment of Slice 3. Optional filters constrain supported observable type, minimum confidence, an inclusive `valid_from` window, and required markings. The canonical definition and filtered count are stored with each batch, and each excluded object remains reviewable without being promoted into evidence. Source selection remains fixed to the manual STIX source; validation failures remain quarantined. Enrichment workflows, promotion state filters, and network TAXII work remain in the backlog.
 
+Version 1.5 completes the analyst-promotion increment of Slice 3. Accepted import outcomes can be promoted into distinct evidence only through an authenticated analyst action that records polarity, claim, uncertainty, reviewer, review time, and an audit event. Batch metrics and history filters distinguish promoted from unreviewed imports. Automated enrichment and network TAXII work remain in the backlog.
+
 Upstream verification on 2026-10-25 found that OpenTAXII documents TAXII 1.0 and 1.1 support and describes the project as feature-complete with bug-fix maintenance. It does not establish TAXII 2.x or 2.1 support. Any future TAXII 2.1 client will therefore use a separately verified implementation and compatibility suite.
 
 ## Slice 1 — research and contract fixtures

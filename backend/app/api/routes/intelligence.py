@@ -1,7 +1,8 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 from app.api.dependencies import AnalystUser, DatabaseSession
 from app.intelligence.collection import collect_entity
@@ -14,11 +15,21 @@ from app.intelligence.stix_import import (
     canonical_bundle_size,
     import_stix_bundle,
 )
-from app.models import Entity, ImportBatch, Observation, Source
+from app.models import (
+    Entity,
+    Evidence,
+    ImportBatch,
+    ImportObjectOutcome,
+    Observation,
+    Source,
+)
 from app.models.enums import EntityType
+from app.operations.audit import emit_audit
 from app.schemas.intelligence import (
     EntityListResponse,
     EntityResponse,
+    EvidencePromotionRequest,
+    EvidencePromotionResponse,
     ImportBatchDetail,
     ImportBatchListResponse,
     ImportBatchSummary,
@@ -147,6 +158,7 @@ async def import_stix(
         rejected_objects=summary.rejected_objects,
         skipped_objects=summary.skipped_objects,
         filtered_objects=summary.filtered_objects,
+        promoted_objects=0,
         filter_definition=filter_definition.as_record(),
         completed_at=summary.completed_at,
         items=[
@@ -190,6 +202,7 @@ def _import_summary(batch: ImportBatch, source_id: str) -> ImportBatchSummary:
         rejected_objects=batch.rejected_objects,
         skipped_objects=batch.skipped_objects,
         filtered_objects=batch.filtered_objects,
+        promoted_objects=batch.promoted_objects,
         created_at=batch.created_at,
         completed_at=batch.completed_at,
     )
@@ -205,6 +218,7 @@ async def list_imports(
         pattern="^(COMPLETED|COMPLETED_WITH_ISSUES)$",
     ),
     has_issues: bool | None = None,
+    has_promotions: bool | None = None,
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ) -> ImportBatchListResponse:
@@ -217,6 +231,10 @@ async def list_imports(
         filters.append(issue_count > 0)
     elif has_issues is False:
         filters.append(issue_count == 0)
+    if has_promotions is True:
+        filters.append(ImportBatch.promoted_objects > 0)
+    elif has_promotions is False:
+        filters.append(ImportBatch.promoted_objects == 0)
     total = await session.scalar(select(func.count(ImportBatch.id)).where(*filters))
     batches = list(
         (
@@ -274,11 +292,99 @@ async def get_import(
                 message=item.message,
                 entity_id=item.entity_id,
                 observation_id=item.observation_id,
+                evidence_id=item.evidence_id,
                 content_hash=item.content_hash,
                 raw_record=item.raw_record,
             )
             for item in batch.objects
         ],
+    )
+
+
+@router.post(
+    "/imports/{import_id}/objects/{object_outcome_id}/promote",
+    response_model=EvidencePromotionResponse,
+)
+async def promote_import_object(
+    import_id: UUID,
+    object_outcome_id: UUID,
+    payload: EvidencePromotionRequest,
+    session: DatabaseSession,
+    user: AnalystUser,
+) -> EvidencePromotionResponse:
+    batch = await session.get(ImportBatch, import_id)
+    if batch is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import not found")
+    outcome = await session.scalar(
+        select(ImportObjectOutcome)
+        .where(
+            ImportObjectOutcome.id == object_outcome_id,
+            ImportObjectOutcome.import_batch_id == batch.id,
+        )
+        .with_for_update()
+    )
+    if outcome is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Import object outcome not found",
+        )
+    if outcome.disposition not in {"IMPORTED", "DEDUPLICATED"} or outcome.observation_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Only accepted import outcomes can be promoted to evidence",
+        )
+    if outcome.evidence_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This import outcome has already been promoted to evidence",
+        )
+    observation = await session.get(Observation, outcome.observation_id)
+    if observation is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The linked observation is no longer available",
+        )
+    reviewed_at = datetime.now(UTC)
+    evidence = Evidence(
+        observation_id=observation.id,
+        polarity=payload.polarity,
+        claim=payload.claim,
+        uncertainty_notes=payload.uncertainty_notes,
+        analyst_reviewed_at=reviewed_at,
+        promoted_by=user.id,
+    )
+    session.add(evidence)
+    await session.flush()
+    outcome.evidence_id = evidence.id
+    await session.execute(
+        update(ImportBatch)
+        .where(ImportBatch.id == batch.id)
+        .values(promoted_objects=ImportBatch.promoted_objects + 1)
+    )
+    emit_audit(
+        session,
+        actor_id=user.id,
+        action="intelligence.import_object_promoted",
+        object_type="evidence",
+        object_id=evidence.id,
+        details={
+            "import_id": str(batch.id),
+            "object_outcome_id": str(outcome.id),
+            "observation_id": str(observation.id),
+            "polarity": payload.polarity.value,
+        },
+    )
+    await session.commit()
+    return EvidencePromotionResponse(
+        evidence_id=evidence.id,
+        import_id=batch.id,
+        object_outcome_id=outcome.id,
+        observation_id=observation.id,
+        polarity=evidence.polarity,
+        claim=evidence.claim,
+        uncertainty_notes=evidence.uncertainty_notes or "",
+        promoted_by=user.id,
+        analyst_reviewed_at=reviewed_at,
     )
 
 

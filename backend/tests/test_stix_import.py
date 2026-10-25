@@ -53,6 +53,15 @@ def test_stix_import_requires_authentication(client: TestClient) -> None:
     )
     assert response.status_code == 401
     assert client.get("/api/v1/intelligence/imports").status_code == 401
+    assert client.post(
+        "/api/v1/intelligence/imports/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/objects/"
+        "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/promote",
+        json={
+            "polarity": "CONTEXTUAL",
+            "claim": "Reviewed indicator context.",
+            "uncertainty_notes": "Provider scope remains a limitation.",
+        },
+    ).status_code == 401
 
 
 def test_stix_import_preserves_provenance_and_reports_unsupported_objects(
@@ -276,6 +285,110 @@ def test_stix_import_rejects_invalid_filter_definitions(
         headers=auth_headers,
     )
     assert response.status_code == 422
+
+
+def test_analyst_promotes_an_accepted_outcome_to_audited_evidence(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    imported = client.post(
+        "/api/v1/intelligence/imports/stix-bundles",
+        json={"bundle": load_bundle("valid_bundle.json")},
+        headers=auth_headers,
+    )
+    assert imported.status_code == 200
+    import_id = imported.json()["import_id"]
+    detail = client.get(
+        f"/api/v1/intelligence/imports/{import_id}", headers=auth_headers
+    )
+    accepted = next(
+        item for item in detail.json()["objects"] if item["disposition"] == "IMPORTED"
+    )
+    skipped = next(
+        item for item in detail.json()["objects"] if item["disposition"] == "SKIPPED"
+    )
+    payload = {
+        "polarity": "CONTEXTUAL",
+        "claim": "The reviewed STIX indicator is relevant investigation context.",
+        "uncertainty_notes": (
+            "Provider presence does not establish attribution or current activity."
+        ),
+    }
+    promoted = client.post(
+        f"/api/v1/intelligence/imports/{import_id}/objects/{accepted['id']}/promote",
+        json=payload,
+        headers=auth_headers,
+    )
+    assert promoted.status_code == 200
+    evidence = promoted.json()
+    assert evidence["observation_id"] == accepted["observation_id"]
+    assert evidence["polarity"] == "CONTEXTUAL"
+    assert evidence["claim"] == payload["claim"]
+    assert evidence["promoted_by"]
+    assert evidence["analyst_reviewed_at"]
+
+    refreshed = client.get(
+        f"/api/v1/intelligence/imports/{import_id}", headers=auth_headers
+    ).json()
+    assert refreshed["promoted_objects"] == 1
+    promoted_outcome = next(
+        item for item in refreshed["objects"] if item["id"] == accepted["id"]
+    )
+    assert promoted_outcome["evidence_id"] == evidence["evidence_id"]
+
+    promoted_history = client.get(
+        "/api/v1/intelligence/imports?has_promotions=true", headers=auth_headers
+    )
+    assert promoted_history.status_code == 200
+    assert promoted_history.json()["total"] == 1
+    unpromoted_history = client.get(
+        "/api/v1/intelligence/imports?has_promotions=false", headers=auth_headers
+    )
+    assert unpromoted_history.status_code == 200
+    assert unpromoted_history.json()["total"] == 0
+
+    detection = client.post(
+        "/api/v1/detections",
+        headers=auth_headers,
+        json={
+            "title": "Reviewed STIX indicator candidate",
+            "kind": "SIGMA",
+            "behavior_hypothesis": (
+                "A monitored host communicates with the reviewed STIX indicator."
+            ),
+            "required_telemetry": ["DNS and network connection logs"],
+            "candidate_logic": "title: Reviewed STIX indicator\nstatus: experimental",
+            "supporting_evidence_ids": [evidence["evidence_id"]],
+            "false_positives": ["Authorized security testing"],
+            "limitations": ["Requires local telemetry validation"],
+        },
+    )
+    assert detection.status_code == 201
+    assert detection.json()["supporting_evidence_ids"] == [evidence["evidence_id"]]
+
+    repeated = client.post(
+        f"/api/v1/intelligence/imports/{import_id}/objects/{accepted['id']}/promote",
+        json=payload,
+        headers=auth_headers,
+    )
+    assert repeated.status_code == 409
+    assert repeated.json()["detail"] == (
+        "This import outcome has already been promoted to evidence"
+    )
+    invalid_outcome = client.post(
+        f"/api/v1/intelligence/imports/{import_id}/objects/{skipped['id']}/promote",
+        json=payload,
+        headers=auth_headers,
+    )
+    assert invalid_outcome.status_code == 409
+
+    audit = client.get("/api/v1/audit", headers=auth_headers)
+    assert audit.status_code == 200
+    promotion_audit = next(
+        item
+        for item in audit.json()
+        if item["action"] == "intelligence.import_object_promoted"
+    )
+    assert promotion_audit["details"]["object_outcome_id"] == accepted["id"]
 
 
 def test_import_history_filters_and_quarantines_object_outcomes(
