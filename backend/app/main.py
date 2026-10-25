@@ -39,10 +39,18 @@ from app.intelligence.connectors.cti import (
     ThreatFoxConnector,
     VirusTotalConnector,
 )
+from app.intelligence.connectors.domain import CrtShConnector, RdapConnector
+from app.intelligence.connectors.infrastructure import (
+    CensysConnector,
+    GreyNoiseConnector,
+    ShodanConnector,
+)
 from app.intelligence.connectors.knowledge import MitreAttackConnector
 from app.intelligence.connectors.local_fixture import LocalFixtureConnector
 from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.connectors.registry import ConnectorRegistry
+from app.intelligence.connectors.reputation import AbuseIpDbConnector
+from app.intelligence.connectors.url import UrlscanConnector
 from app.intelligence.connectors.vulnerability import (
     CisaKevConnector,
     CveOrgConnector,
@@ -89,6 +97,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         registry.register(NvdConnector(http_client))
         registry.register(OsvConnector(http_client))
         registry.register(MitreAttackConnector(http_client))
+        registry.register(ShodanConnector(http_client))
+        registry.register(CensysConnector(http_client))
+        registry.register(GreyNoiseConnector(http_client))
+        registry.register(AbuseIpDbConnector(http_client))
+        registry.register(CrtShConnector(http_client))
+        registry.register(RdapConnector(http_client))
+        registry.register(UrlscanConnector(http_client))
         manager = ConnectorManager(registry)
         application.state.connector_manager = manager
         taxii_client = TaxiiClient(http_client)

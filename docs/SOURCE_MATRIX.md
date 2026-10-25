@@ -39,7 +39,7 @@ Total entries: **107**.
 | [BGPView](https://bgpview.io) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Cert Spotter](https://sslmate.com/certspotter) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Certificate Transparency data](https://certificate.transparency.dev) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [crt.sh](https://crt.sh) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [crt.sh](https://crt.sh) | Domain Dns | Public Certificate Search | None declared | ADAPTER_SCAFFOLDED | Fixture-tested; bounded live endpoint validation pending | Certificate names show issuance history, not current control or attribution |
 | [DNSDB](https://www.dnsdb.info) | Domain Dns | To Be Verified | `DNSDB_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [DNSDumpster](https://dnsdumpster.com) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [HackerTarget](https://hackertarget.com) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
@@ -50,18 +50,18 @@ Total entries: **107**.
 | [MaxMind GeoLite](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [RADb](https://www.radb.net) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [RapidDNS](https://rapiddns.io) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [RDAP](https://about.rdap.org) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [RDAP](https://about.rdap.org) | Domain Dns | Public Rdap Bootstrap | None declared | ADAPTER_SCAFFOLDED | Fixture-tested; bounded live endpoint validation pending | Registration data may be redacted and does not prove operator identity |
 | [RIPEstat](https://stat.ripe.net) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [SecurityTrails](https://securitytrails.com) | Domain Dns | To Be Verified | `SECURITYTRAILS_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [ViewDNS](https://viewdns.info) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [WhoisXML API](https://www.whoisxmlapi.com) | Domain Dns | To Be Verified | `WHOISXML_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [Censys](https://search.censys.io) | Infrastructure | To Be Verified | `CENSYS_API_TOKEN` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [Censys](https://search.censys.io) | Infrastructure | Platform Host Lookup Api | `CENSYS_API_TOKEN` | IMPLEMENTED_AWAITING_KEY | Fixture-tested; bounded live authentication pending user token | Available fields and quota depend on the configured Censys plan |
 | [FOFA](https://en.fofa.info) | Infrastructure | To Be Verified | `FOFA_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [GreyNoise](https://www.greynoise.io) | Infrastructure | To Be Verified | `GREYNOISE_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [GreyNoise](https://www.greynoise.io) | Infrastructure | Community Ip Lookup Api | `GREYNOISE_API_KEY` | IMPLEMENTED_AWAITING_KEY | Fixture-tested; bounded live authentication pending user key | Scanner context is not a maliciousness verdict |
 | [LeakIX](https://leakix.net) | Infrastructure | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Netlas](https://netlas.io) | Infrastructure | To Be Verified | `NETLAS_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [ONYPHE](https://www.onyphe.io) | Infrastructure | To Be Verified | `ONYPHE_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [Shodan](https://www.shodan.io) | Infrastructure | To Be Verified | `SHODAN_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [Shodan](https://www.shodan.io) | Infrastructure | Host Information Api | `SHODAN_API_KEY` | IMPLEMENTED_AWAITING_KEY | Fixture-tested; bounded live authentication pending user key | Observed exposure may be stale and does not establish compromise |
 | [ZoomEye](https://www.zoomeye.org) | Infrastructure | To Be Verified | `ZOOMEYE_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [MITRE ATT&CK Enterprise](https://attack.mitre.org/matrices/enterprise) | Knowledge | Public Stix Bundle | None declared | PUBLIC_FEED_SUPPORTED | Fixture-tested against official STIX bundle shape | Technique context supports mapping; it does not infer observed behavior |
 | [MITRE ATT&CK ICS](https://attack.mitre.org/matrices/ics) | Knowledge | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
@@ -75,7 +75,7 @@ Total entries: **107**.
 | [Joe Sandbox](https://www.joesandbox.com) | Malware | To Be Verified | `JOE_SANDBOX_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Malpedia](https://malpedia.caad.fkie.fraunhofer.de) | Malware | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [vx-underground](https://vx-underground.org) | Malware | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [AbuseIPDB](https://www.abuseipdb.com) | Reputation | To Be Verified | `ABUSEIPDB_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [AbuseIPDB](https://www.abuseipdb.com) | Reputation | Check Api V2 | `ABUSEIPDB_API_KEY` | IMPLEMENTED_AWAITING_KEY | Fixture-tested; bounded live authentication pending user key | Community reports and confidence score require analyst context |
 | [Bambenek feeds](https://www.bambenekconsulting.com) | Reputation | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Blocklist.de](https://www.blocklist.de) | Reputation | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [CINS](https://cinsscore.com) | Reputation | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
@@ -111,7 +111,7 @@ Total entries: **107**.
 | [Google Safe Browsing](https://safebrowsing.google.com) | Url Phishing | To Be Verified | `GOOGLE_SAFE_BROWSING_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [OpenPhish](https://openphish.com) | Url Phishing | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [PhishTank](https://phishtank.org) | Url Phishing | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [urlscan.io](https://urlscan.io) | Url Phishing | To Be Verified | `URLSCAN_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [urlscan.io](https://urlscan.io) | Url Phishing | Passive Search Api | `URLSCAN_API_KEY` | ADAPTER_SCAFFOLDED | Fixture-tested passive search; bounded live validation pending | Historical scan presence does not establish maliciousness |
 | [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | Vulnerability | Public Json Feed | None declared | PUBLIC_FEED_SUPPORTED | Lookup and bounded feed ingestion tested; live feed verified 2026-10-22 | Presence means known exploitation; absence is not evidence of safety |
 | [Exploit-DB](https://www.exploit-db.com) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [GitHub Advisory Database](https://github.com/advisories) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |

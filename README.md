@@ -1,6 +1,6 @@
 # ThreatLens
 
-ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. Version 2.0 completes the primary CTI connector wave while preserving the complete Phase 0–8 operational baseline.
+ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. Version 2.1 completes the infrastructure, registration, passive URL, and reputation connector wave while preserving the complete Phase 0–8 operational baseline.
 
 ## What works
 
@@ -8,6 +8,7 @@ ThreatLens is an evidence-backed cyber-threat intelligence and investigation pla
 - A registry of 106 intelligence sources and import methods with explicit implementation and health states.
 - Canonical entity normalization, deduplicated collection, provider records, observations, and evidence.
 - A verified CISA KEV lookup and scheduled-feed connector plus fixture-tested VirusTotal, OTX, ThreatFox, MISP, CVE.org, NVD, OSV, and MITRE ATT&CK adapters.
+- Fixture-tested Shodan, Censys, GreyNoise, AbuseIPDB, RDAP, crt.sh, and passive-only urlscan.io adapters with explicit plan, quota, attribution, and interpretation limits.
 - Deterministic five-step investigation plans with request, runtime, entity, graph, report, and zero-cost budgets.
 - Resumable and idempotent investigation execution, immutable analyst decisions, evidence-backed findings, and separate confidence dimensions.
 - Bounded relationship graphs and contextual similarity with an explicit attribution limitation.
@@ -89,4 +90,4 @@ compose.yaml              PostgreSQL and development services
 .env.example              Non-secret configuration and credential checklist
 ```
 
-See the [2.0 primary-CTI report](docs/implementation/ITERATION_2_0_PRIMARY_CTI.md), [1.9 scheduled-feed report](docs/implementation/ITERATION_1_9_SCHEDULED_FEEDS.md), [1.8 controlled-export report](docs/implementation/ITERATION_1_8_CONTROLLED_EXPORT.md), [1.7 enrichment report](docs/implementation/ITERATION_1_7_ENRICHMENT.md), [1.6 TAXII collection report](docs/implementation/ITERATION_1_6_TAXII_COLLECTION.md), [1.5 evidence-promotion report](docs/implementation/ITERATION_1_5_EVIDENCE_PROMOTION.md), [1.4 filter report](docs/implementation/ITERATION_1_4_IMPORT_FILTERS.md), [1.3 import-ledger report](docs/implementation/ITERATION_1_3_IMPORT_LEDGER.md), [1.2 STIX import report](docs/implementation/ITERATION_1_2_STIX_IMPORT.md), [1.1 UI iteration report](docs/implementation/ITERATION_1_1_SECURITY_CONSOLE.md), [intelligence interoperability backlog](docs/implementation/INTELLIGENCE_INTEROPERABILITY_BACKLOG.md), [Phase 3–8 report](docs/implementation/PHASE_3_8_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), [testing strategy](docs/implementation/TESTING_STRATEGY.md), and [source matrix](docs/SOURCE_MATRIX.md).
+See the [2.1 infrastructure report](docs/implementation/ITERATION_2_1_INFRASTRUCTURE.md), [2.0 primary-CTI report](docs/implementation/ITERATION_2_0_PRIMARY_CTI.md), [1.9 scheduled-feed report](docs/implementation/ITERATION_1_9_SCHEDULED_FEEDS.md), [1.8 controlled-export report](docs/implementation/ITERATION_1_8_CONTROLLED_EXPORT.md), [1.7 enrichment report](docs/implementation/ITERATION_1_7_ENRICHMENT.md), [1.6 TAXII collection report](docs/implementation/ITERATION_1_6_TAXII_COLLECTION.md), [1.5 evidence-promotion report](docs/implementation/ITERATION_1_5_EVIDENCE_PROMOTION.md), [1.4 filter report](docs/implementation/ITERATION_1_4_IMPORT_FILTERS.md), [1.3 import-ledger report](docs/implementation/ITERATION_1_3_IMPORT_LEDGER.md), [1.2 STIX import report](docs/implementation/ITERATION_1_2_STIX_IMPORT.md), [1.1 UI iteration report](docs/implementation/ITERATION_1_1_SECURITY_CONSOLE.md), [intelligence interoperability backlog](docs/implementation/INTELLIGENCE_INTEROPERABILITY_BACKLOG.md), [Phase 3–8 report](docs/implementation/PHASE_3_8_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), [testing strategy](docs/implementation/TESTING_STRATEGY.md), and [source matrix](docs/SOURCE_MATRIX.md).

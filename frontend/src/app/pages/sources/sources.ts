@@ -35,7 +35,15 @@ export class Sources {
   }
   protected updateQuery(event: Event): void { this.query.set((event.target as HTMLInputElement).value); }
   protected updateCategory(event: Event): void { this.selectedCategory.set((event.target as HTMLSelectElement).value); }
-  protected inspect(source: SourceSummary): void { this.sourceService.detail(source.source_id).subscribe({ next: (detail) => this.selected.set(detail) }); }
+  protected inspect(source: SourceSummary): void {
+    this.sourceService.detail(source.source_id).subscribe({
+      next: (detail) => {
+        this.selected.set(detail);
+        this.testType.set(detail.supported_entity_types[0] || 'DOMAIN');
+        this.testResult.set(null);
+      },
+    });
+  }
   protected closeDetail(): void { this.selected.set(null); this.testResult.set(null); }
   protected updateTest(field: 'type' | 'value', event: Event): void {
     const value = (event.target as HTMLInputElement | HTMLSelectElement).value;
