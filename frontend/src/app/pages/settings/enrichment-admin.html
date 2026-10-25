@@ -1,0 +1,29 @@
+<section class="enrichment-console">
+  <header class="console-heading">
+    <div><span>PROCESSING PIPELINE</span><h2>Automated enrichment</h2></div>
+    <p>Apply explicit source and entity allowlists to new canonical records. Results remain observations until an analyst promotes them.</p>
+  </header>
+  <form class="policy-form" (submit)="create($event)">
+    <label><span>Policy name</span><input required minlength="2" placeholder="Vulnerability context" [value]="name()" (input)="updateText($event)" /></label>
+    <label><span>Entity scope</span><input value="CVE" disabled /></label>
+    <label><span>Source</span><select [value]="sourceId()" (change)="updateSource($event)"><option value="cisa-kev">CISA KEV</option><option value="osv">OSV.dev</option></select></label>
+    <label><span>Cadence minutes</span><input type="number" min="10" max="10080" [value]="cadence()" (input)="updateNumber('cadence', $event)" /></label>
+    <label><span>Batch limit</span><input type="number" min="1" max="100" [value]="batchSize()" (input)="updateNumber('batchSize', $event)" /></label>
+    <button class="primary-button" [disabled]="busy() !== null">Create policy</button>
+  </form>
+  @if (message()) { <div class="workspace-message success">{{ message() }}</div> }
+  @if (error()) { <div class="workspace-message error">{{ error() }}</div> }
+  <div class="policy-grid">
+    @for (policy of policies(); track policy.id) {
+      <article class="policy-card">
+        <div class="policy-state" [class.live]="policy.enabled"></div>
+        <div><span>{{ policy.entity_types.join(', ') }} · {{ policy.source_ids.join(', ') }}</span><h3>{{ policy.name }}</h3><p>{{ policy.max_entities_per_run }} entities per run · every {{ policy.cadence_minutes }} minutes · next {{ policy.next_run_at ? (policy.next_run_at | date:'short') : 'paused' }}</p></div>
+        <div class="policy-actions"><button class="secondary-button" type="button" [disabled]="busy() !== null" (click)="toggle(policy)">{{ policy.enabled ? 'Pause' : 'Resume' }}</button><button class="primary-button" type="button" [disabled]="busy() !== null || !policy.enabled" (click)="run(policy)">{{ busy() === 'run:' + policy.id ? 'Running…' : 'Run now' }}</button></div>
+      </article>
+    } @empty { <div class="empty-state">No enrichment policies configured.</div> }
+  </div>
+  @if (runs().length) {
+    <div class="run-ledger"><h3>Recent enrichment runs</h3>@for (run of runs(); track run.id) { <div><span class="run-status" [class.warn]="run.status !== 'COMPLETED'">{{ run.status }}</span><b>{{ run.processed_entities }} processed · {{ run.new_observations }} new</b><small>{{ outcomes(run) }} · {{ run.started_at | date:'short' }}</small></div> }</div>
+  }
+  <p class="boundary-note">A missing source result records absence only. It does not label an entity safe or create evidence.</p>
+</section>

@@ -18,6 +18,8 @@ Version 1.5 completes the analyst-promotion increment of Slice 3. Accepted impor
 
 Version 1.6 completes the read-only collection portion of Slice 4. Administrators configure HTTPS discovery endpoints and optional bearer-token environment names, explicitly authorize readable collections, and control cadence. The tested TAXII 2.1 client supports discovery, collections, manifests, opaque pagination, deterministic page and object budgets, `added_after` cursors, scheduling, durable runs, partial-object quarantine, and STIX import lineage. Automated enrichment and controlled export remain in the backlog.
 
+Version 1.7 completes the automated enrichment portion of Slice 3. Administrators define explicit entity and connector allowlists, cadence, and per-run entity budgets. New canonical entities are processed once per policy through the existing connector contract, with durable collection-job links, per-source outcomes, reused and new observation IDs, and audit events. Demonstration sources are blocked from automation, and `NO_RESULT` creates neither an observation nor a safety verdict. Controlled export remains in the backlog.
+
 Upstream verification on 2026-10-25 found that OpenTAXII documents TAXII 1.0 and 1.1 support and describes the project as feature-complete with bug-fix maintenance. It does not establish TAXII 2.x or 2.1 support. Any future TAXII 2.1 client will therefore use a separately verified implementation and compatibility suite.
 
 ## Slice 1 — research and contract fixtures

@@ -340,6 +340,75 @@ class TaxiiCollectionRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     collection: Mapped[TaxiiCollection] = relationship(back_populates="runs")
 
 
+class EnrichmentPolicy(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "enrichment_policies"
+
+    name: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
+    entity_types: Mapped[list[str]] = mapped_column(JSON, default=list)
+    source_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    max_entities_per_run: Mapped[int] = mapped_column(Integer, default=25, nullable=False)
+    cadence_minutes: Mapped[int] = mapped_column(Integer, default=60, nullable=False)
+    enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
+    created_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    runs: Mapped[list["EnrichmentRun"]] = relationship(
+        back_populates="policy", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class EnrichmentRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "enrichment_runs"
+
+    policy_id: Mapped[UUID] = mapped_column(
+        ForeignKey("enrichment_policies.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    triggered_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    status: Mapped[CollectionJobStatus] = mapped_column(
+        Enum(CollectionJobStatus, native_enum=False, length=20), index=True, nullable=False
+    )
+    candidate_entities: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    processed_entities: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    new_observations: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    source_outcomes: Mapped[dict[str, int]] = mapped_column(JSON, default=dict)
+    error: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    policy: Mapped[EnrichmentPolicy] = relationship(back_populates="runs")
+    items: Mapped[list["EnrichmentItem"]] = relationship(
+        back_populates="run", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class EnrichmentItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "enrichment_items"
+    __table_args__ = (UniqueConstraint("run_id", "entity_id"),)
+
+    run_id: Mapped[UUID] = mapped_column(
+        ForeignKey("enrichment_runs.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    entity_id: Mapped[UUID] = mapped_column(
+        ForeignKey("entities.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    collection_job_id: Mapped[UUID] = mapped_column(
+        ForeignKey("collection_jobs.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    status: Mapped[CollectionJobStatus] = mapped_column(
+        Enum(CollectionJobStatus, native_enum=False, length=20), index=True, nullable=False
+    )
+    source_outcomes: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    observation_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    new_observation_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+
+    run: Mapped[EnrichmentRun] = relationship(back_populates="items")
+
+
 class AuditEvent(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "audit_events"
 

@@ -5,8 +5,9 @@ import { AuthService } from '../../core/auth.service';
 import { AuditEvent } from '../../core/operations.models';
 import { OperationsService } from '../../core/operations.service';
 import { TaxiiAdmin } from './taxii-admin';
+import { EnrichmentAdmin } from './enrichment-admin';
 
-@Component({ selector: 'app-settings', imports: [DatePipe, TaxiiAdmin], templateUrl: './settings.html', styleUrl: './settings.scss' })
+@Component({ selector: 'app-settings', imports: [DatePipe, EnrichmentAdmin, TaxiiAdmin], templateUrl: './settings.html', styleUrl: './settings.scss' })
 export class Settings {
   protected readonly auth = inject(AuthService);
   private readonly operations = inject(OperationsService);
