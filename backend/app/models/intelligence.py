@@ -410,6 +410,88 @@ class EnrichmentItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     run: Mapped[EnrichmentRun] = relationship(back_populates="items")
 
 
+class FeedSubscription(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "feed_subscriptions"
+
+    source_id: Mapped[UUID] = mapped_column(
+        ForeignKey("sources.id", ondelete="RESTRICT"), unique=True, index=True, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
+    enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
+    cadence_minutes: Mapped[int] = mapped_column(Integer, default=60, nullable=False)
+    max_records: Mapped[int] = mapped_column(Integer, default=1000, nullable=False)
+    created_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    source: Mapped[Source] = relationship(lazy="selectin")
+    runs: Mapped[list["FeedRun"]] = relationship(
+        back_populates="subscription", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class FeedRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "feed_runs"
+
+    subscription_id: Mapped[UUID] = mapped_column(
+        ForeignKey("feed_subscriptions.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    triggered_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    status: Mapped[CollectionJobStatus] = mapped_column(
+        Enum(CollectionJobStatus, native_enum=False, length=20), index=True, nullable=False
+    )
+    connector_outcome: Mapped[str | None] = mapped_column(String(40))
+    received_records: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    accepted_records: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    rejected_records: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_entities: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    reused_entities: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    new_observations: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    deduplicated_observations: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    error: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    subscription: Mapped[FeedSubscription] = relationship(back_populates="runs")
+    items: Mapped[list["FeedRunItem"]] = relationship(
+        back_populates="run",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="FeedRunItem.record_index",
+    )
+
+
+class FeedRunItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "feed_run_items"
+    __table_args__ = (UniqueConstraint("run_id", "record_index"),)
+
+    run_id: Mapped[UUID] = mapped_column(
+        ForeignKey("feed_runs.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    record_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    external_id: Mapped[str | None] = mapped_column(String(500))
+    disposition: Mapped[str] = mapped_column(String(24), index=True, nullable=False)
+    code: Mapped[str] = mapped_column(String(80), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("entities.id", ondelete="SET NULL"), index=True
+    )
+    observation_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("observations.id", ondelete="SET NULL"), index=True
+    )
+    source_record_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("source_records.id", ondelete="SET NULL"), index=True
+    )
+    content_hash: Mapped[str | None] = mapped_column(String(64))
+    raw_record: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+    run: Mapped[FeedRun] = relationship(back_populates="items")
+
+
 class TaxiiExportPolicy(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "taxii_export_policies"
 

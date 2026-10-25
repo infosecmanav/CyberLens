@@ -7,8 +7,9 @@ import { OperationsService } from '../../core/operations.service';
 import { TaxiiAdmin } from './taxii-admin';
 import { EnrichmentAdmin } from './enrichment-admin';
 import { ExportControl } from './export-control';
+import { FeedAdmin } from './feed-admin';
 
-@Component({ selector: 'app-settings', imports: [DatePipe, EnrichmentAdmin, ExportControl, TaxiiAdmin], templateUrl: './settings.html', styleUrl: './settings.scss' })
+@Component({ selector: 'app-settings', imports: [DatePipe, EnrichmentAdmin, ExportControl, FeedAdmin, TaxiiAdmin], templateUrl: './settings.html', styleUrl: './settings.scss' })
 export class Settings {
   protected readonly auth = inject(AuthService);
   private readonly operations = inject(OperationsService);

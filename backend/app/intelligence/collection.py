@@ -13,6 +13,7 @@ from app.intelligence.connectors.models import (
     ConnectorRequest,
     ConnectorResult,
     IntelligenceEntity,
+    NormalizedObservation,
 )
 from app.intelligence.normalization import NormalizedEntity
 from app.models import CollectionJob, Entity, Observation, Source, SourceRecord
@@ -42,8 +43,7 @@ async def get_or_create_entity(session: AsyncSession, normalized: NormalizedEnti
     return entity
 
 
-def _record_hash(result: ConnectorResult, observation_index: int) -> str:
-    observation = result.observations[observation_index]
+def observation_record_hash(observation: NormalizedObservation) -> str:
     record = observation.raw_record or {
         "entity": observation.entity.model_dump(mode="json"),
         "observation_type": observation.observation_type,
@@ -119,7 +119,7 @@ async def collect_entity(
             source.last_error = result.message or result.outcome.value
 
         for index, observation in enumerate(result.observations):
-            content_hash = _record_hash(result, index)
+            content_hash = observation_record_hash(observation)
             source_record = await session.scalar(
                 select(SourceRecord).where(
                     SourceRecord.source_id == source.id,

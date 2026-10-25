@@ -14,6 +14,7 @@ from app.api.routes import (
     detections,
     enrichment,
     export,
+    feeds,
     graph,
     health,
     intelligence,
@@ -35,8 +36,9 @@ from app.db.session import (
 from app.intelligence.connectors.local_fixture import LocalFixtureConnector
 from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.connectors.registry import ConnectorRegistry
-from app.intelligence.connectors.vulnerability import CisaKevConnector, OsvConnector
+from app.intelligence.connectors.vulnerability import CisaKevConnector, NvdConnector, OsvConnector
 from app.intelligence.enrichment import run_due_enrichment_policies
+from app.intelligence.feeds import run_due_feed_subscriptions
 from app.intelligence.seed import seed_source_catalog
 from app.intelligence.taxii import TaxiiClient, run_due_collections
 from app.operations.monitoring import run_due_objectives
@@ -67,6 +69,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         registry = ConnectorRegistry()
         registry.register(LocalFixtureConnector())
         registry.register(CisaKevConnector(http_client))
+        registry.register(NvdConnector(http_client))
         registry.register(OsvConnector(http_client))
         manager = ConnectorManager(registry)
         application.state.connector_manager = manager
@@ -83,6 +86,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                         await run_due_collections(session, taxii_client)
                     async with get_session_factory()() as session:
                         await run_due_enrichment_policies(session, manager)
+                    async with get_session_factory()() as session:
+                        await run_due_feed_subscriptions(session, manager)
                 except Exception:
                     logger.exception("Scheduled monitoring cycle failed")
 
@@ -129,6 +134,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(taxii.router, prefix=active_settings.api_v1_prefix)
     application.include_router(enrichment.router, prefix=active_settings.api_v1_prefix)
     application.include_router(export.router, prefix=active_settings.api_v1_prefix)
+    application.include_router(feeds.router, prefix=active_settings.api_v1_prefix)
     return application
 
 

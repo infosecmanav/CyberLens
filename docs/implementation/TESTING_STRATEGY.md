@@ -2,7 +2,7 @@
 
 ## Required checks
 
-- Backend pytest runs against an isolated SQLite database and covers health, authentication, RBAC, source inventory, connector routing, normalization, STIX 2.1 import contracts, partial imports, provenance, deduplication, reproducible pre-import filters, explicit evidence promotion, durable batch history, issue and promotion filters, quarantined outcomes, investigation execution, budget exhaustion, resume/idempotency, prompt-injection resistance, graph evidence, detection validation, approvals, dry runs, playbooks, monitoring baselines, duplicate suppression, and audit metrics.
+- Backend pytest runs against an isolated SQLite database and covers health, authentication, RBAC, source inventory, connector routing, NVD and CISA feed fixtures, scheduled-feed authorization and idempotency, normalization, STIX 2.1 import contracts, partial imports, provenance, deduplication, reproducible pre-import filters, explicit evidence promotion, durable batch history, issue and promotion filters, quarantined outcomes, investigation execution, budget exhaustion, resume/idempotency, prompt-injection resistance, graph evidence, detection validation, approvals, dry runs, playbooks, monitoring baselines, duplicate suppression, and audit metrics.
 - Ruff and strict mypy validate every backend source module.
 - Alembic upgrades a real PostgreSQL database and `alembic check` verifies ORM/migration parity.
 - Angular tests use Vitest with jsdom. Shell tests cover route rendering, command-palette keyboard access, and theme changes; service tests cover persisted theme behavior and intelligence requests. The production build checks strict templates, TypeScript, styles, route chunks, and bundle budgets.

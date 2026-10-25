@@ -10,6 +10,7 @@
     <app-export-control />
     @if (user.role === 'ADMIN') {
       <app-taxii-admin />
+      <app-feed-admin />
       <app-enrichment-admin />
       <section class="workspace-panel policy-list audit-list"><h2>Recent audit events</h2><ul>@for (event of audit(); track event.id) { <li><b>{{ event.action.replaceAll('_', ' ').toLowerCase() }}</b><span>{{ event.object_type }} · {{ event.occurred_at | date:'short' }}</span></li> } @empty { <li><span>No audit events recorded.</span></li> }</ul></section>
     }

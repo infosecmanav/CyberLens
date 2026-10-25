@@ -28,6 +28,18 @@ class ConnectorManager:
             *(self._safe_lookup(connector, request) for connector in connectors)
         )
 
+    async def fetch_feed(
+        self,
+        request: ConnectorRequest,
+        source_ids: set[str] | None = None,
+    ) -> list[ConnectorResult]:
+        connectors = self.registry.applicable("fetch_feed", "CVE")
+        if source_ids is not None:
+            connectors = [c for c in connectors if c.manifest.source_id in source_ids]
+        return await asyncio.gather(
+            *(self._safe_fetch_feed(connector, request) for connector in connectors)
+        )
+
     async def _safe_lookup(
         self,
         connector: BaseIntelligenceConnector,
@@ -39,6 +51,32 @@ class ConnectorManager:
             async with self._semaphore:
                 async with asyncio.timeout(timeout):
                     return await connector.lookup(request)
+        except TimeoutError:
+            return ConnectorResult(source_id=source_id, outcome=ConnectorOutcome.TIMEOUT)
+        except OSError as exc:
+            return ConnectorResult(
+                source_id=source_id,
+                outcome=ConnectorOutcome.NETWORK_ERROR,
+                message=str(exc),
+            )
+        except Exception:
+            return ConnectorResult(
+                source_id=source_id,
+                outcome=ConnectorOutcome.SOURCE_ERROR,
+                message="Connector execution failed",
+            )
+
+    async def _safe_fetch_feed(
+        self,
+        connector: BaseIntelligenceConnector,
+        request: ConnectorRequest,
+    ) -> ConnectorResult:
+        source_id = connector.manifest.source_id
+        timeout = connector.manifest.default_timeout_seconds
+        try:
+            async with self._semaphore:
+                async with asyncio.timeout(timeout):
+                    return await connector.fetch_feed(request)
         except TimeoutError:
             return ConnectorResult(source_id=source_id, outcome=ConnectorOutcome.TIMEOUT)
         except OSError as exc:

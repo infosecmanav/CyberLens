@@ -47,6 +47,7 @@ class ConnectorRequest(BaseModel):
     query: str | None = None
     reference: str | None = None
     cursor: str | None = None
+    limit: int = Field(default=1000, ge=1, le=5000)
 
 
 class NormalizedObservation(BaseModel):
@@ -60,10 +61,19 @@ class NormalizedObservation(BaseModel):
     external_id: str | None = None
 
 
+class ConnectorIssue(BaseModel):
+    record_index: int = Field(ge=0)
+    code: str
+    message: str
+    external_id: str | None = None
+    raw_record: dict[str, Any] = Field(default_factory=dict)
+
+
 class ConnectorResult(BaseModel):
     source_id: str
     outcome: ConnectorOutcome
     observations: list[NormalizedObservation] = Field(default_factory=list)
+    issues: list[ConnectorIssue] = Field(default_factory=list)
     message: str | None = None
     retry_after_seconds: int | None = None
     quota_remaining: int | None = None

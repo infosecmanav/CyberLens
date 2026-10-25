@@ -6,7 +6,7 @@
   <form class="policy-form" (submit)="create($event)">
     <label><span>Policy name</span><input required minlength="2" placeholder="Vulnerability context" [value]="name()" (input)="updateText($event)" /></label>
     <label><span>Entity scope</span><input value="CVE" disabled /></label>
-    <label><span>Source</span><select [value]="sourceId()" (change)="updateSource($event)"><option value="cisa-kev">CISA KEV</option><option value="osv">OSV.dev</option></select></label>
+    <label><span>Source</span><select [value]="sourceId()" (change)="updateSource($event)"><option value="cisa-kev">CISA KEV</option><option value="nvd">NVD 2.0</option><option value="osv">OSV.dev</option></select></label>
     <label><span>Cadence minutes</span><input type="number" min="10" max="10080" [value]="cadence()" (input)="updateNumber('cadence', $event)" /></label>
     <label><span>Batch limit</span><input type="number" min="1" max="100" [value]="batchSize()" (input)="updateNumber('batchSize', $event)" /></label>
     <button class="primary-button" [disabled]="busy() !== null">Create policy</button>

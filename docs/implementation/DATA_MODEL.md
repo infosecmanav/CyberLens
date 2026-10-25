@@ -6,7 +6,7 @@ The schema preserves the path from source retrieval to analyst action. An entity
 | --- | --- | --- |
 | Access | `User` | Analyst identity, role, active state, and password hash |
 | Sources | `Source`, `SourceCapability` | Provider inventory, access requirements, capabilities, implementation state, and health |
-| Collection | `Entity`, `CollectionJob`, `SourceRecord`, `Observation`, `Evidence` | Canonical objects, bounded runs, deduplicated provider data, observations, and claim-level support/conflict/context |
+| Collection | `Entity`, `CollectionJob`, `SourceRecord`, `Observation`, `Evidence`, `FeedSubscription`, `FeedRun`, `FeedRunItem` | Canonical objects, bounded lookups and feeds, deduplicated provider data, per-record outcomes, observations, and claim-level support/conflict/context |
 | Correlation | `EntityRelationship`, `SimilarityScore` | Typed links with provenance and uncertainty; transparent shared-factor similarity |
 | Investigation | `Investigation`, `InvestigationEntity`, `InvestigationStep`, `InvestigationEvent` | Durable plans, roles, execution state, budgets, attempts, and timeline |
 | Analysis | `Finding`, `FindingEvidence`, `Assessment`, `AssessmentEvidence`, `AnalystDecision` | Evidence-backed claims, separate confidence dimensions, limitations, and immutable human verdict history |
@@ -23,4 +23,6 @@ An analyst promotion creates an `Evidence` row without modifying the source obse
 
 Relationships may cite evidence and always carry provenance plus uncertainty notes. Findings and assessments use join models so evidence polarity and rationale are retained. Analyst decisions supersede prior decisions instead of updating them in place. Approvals retain requester, resolver, rationale, and timestamps.
 
-Migration `20261024_0003` adds the Phase 3–8 operational schema and extends relationships with provenance and uncertainty. Migration `20261025_0004` adds the import ledger and ordered object outcomes. Migration `20261025_0005` adds canonical filter definitions and filtered counts. Migration `20261025_0006` adds analyst promoter attribution, outcome-to-evidence links, and promoted counts. Alembic applies them transactionally after the foundation and collection revisions.
+`FeedSubscription` binds a catalog source to an explicit cadence and record budget. `FeedRun` records connector and aggregate outcomes, while ordered `FeedRunItem` rows retain the disposition, hash, source record, entity, observation, and rejected raw record needed to inspect or reproduce collection. Feed ingestion reuses `SourceRecord` and `Observation` uniqueness and never promotes evidence automatically.
+
+Migration `20261024_0003` adds the Phase 3–8 operational schema and extends relationships with provenance and uncertainty. Migrations `20261025_0004` through `20261025_0009` add the import ledger, filters, evidence promotion, TAXII collection, enrichment, and controlled export. Migration `20261025_0010` adds scheduled feed subscriptions and their durable per-record run ledger. Alembic applies them transactionally after the foundation and collection revisions.

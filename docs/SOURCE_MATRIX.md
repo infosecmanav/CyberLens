@@ -112,14 +112,14 @@ Total entries: **107**.
 | [OpenPhish](https://openphish.com) | Url Phishing | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [PhishTank](https://phishtank.org) | Url Phishing | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [urlscan.io](https://urlscan.io) | Url Phishing | To Be Verified | `URLSCAN_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | Vulnerability | Public Json Feed | None declared | PUBLIC_FEED_SUPPORTED | Unit tested and live feed verified 2026-10-22 | Presence means known exploitation; absence is not evidence of safety |
+| [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | Vulnerability | Public Json Feed | None declared | PUBLIC_FEED_SUPPORTED | Lookup and bounded feed ingestion tested; live feed verified 2026-10-22 | Presence means known exploitation; absence is not evidence of safety |
 | [Exploit-DB](https://www.exploit-db.com) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [GitHub Advisory Database](https://github.com/advisories) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [GitLab Advisory Database](https://advisories.gitlab.com) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Metasploit module references](https://www.metasploit.com) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [MITRE CVE / CVE.org](https://www.cve.org) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Nuclei templates](https://github.com/projectdiscovery/nuclei-templates) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [NVD](https://nvd.nist.gov) | Vulnerability | To Be Verified | `NVD_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [NVD](https://nvd.nist.gov) | Vulnerability | Public Api With Optional Key | `NVD_API_KEY` | ADAPTER_SCAFFOLDED | Fixture-tested success, absence, throttling, authorization, and parse errors | Live validation pending network allowlist for services.nvd.nist.gov |
 | [OSV.dev](https://osv.dev) | Vulnerability | Public Api | None declared | ADAPTER_SCAFFOLDED | Fixture tested; live endpoint blocked by current environment policy | Live validation pending network allowlist for api.osv.dev |
 | [Packet Storm](https://packetstormsecurity.com) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Snyk public advisories](https://security.snyk.io) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
