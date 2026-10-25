@@ -83,6 +83,15 @@ class TaxiiRunStatus(StrEnum):
     FAILED = "FAILED"
 
 
+class ExportStatus(StrEnum):
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    DELIVERING = "DELIVERING"
+    DELIVERED = "DELIVERED"
+    FAILED = "FAILED"
+
+
 class InvestigationStatus(StrEnum):
     PLANNING = "PLANNING"
     COLLECTING = "COLLECTING"

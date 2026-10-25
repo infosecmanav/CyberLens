@@ -1,0 +1,36 @@
+<section class="export-console">
+  <header class="console-heading"><div><span>CONTROLLED SHARING</span><h2>STIX / TAXII export</h2></div><p>Freeze reviewed evidence into a marked payload, require independent approval, then deliver to one allowlisted collection.</p></header>
+  @if (auth.user()?.role === 'ADMIN') {
+    <form class="policy-form" (submit)="createPolicy($event)">
+      <label><span>Policy name</span><input required minlength="2" [value]="name()" (input)="update('name', $event)" placeholder="Partner sharing" /></label>
+      <label><span>Write-authorized destination</span><select required [value]="collectionId()" (change)="update('collectionId', $event)"><option value="">Select collection</option>@for (collection of writableCollections(); track collection.id) { <option [value]="collection.id">{{ collection.label }}</option> }</select></label>
+      <label><span>Allowed marking IDs</span><textarea [value]="markingText()" (input)="update('markingText', $event)" placeholder="marking-definition--…"></textarea></label>
+      <label class="check"><input type="checkbox" [checked]="allowUnmarked()" (change)="toggleUnmarked($event)" /><span>Explicitly allow unmarked</span></label>
+      <button class="primary-button" [disabled]="busy() !== null">Create disabled policy</button>
+    </form>
+  }
+  @if (message()) { <div class="workspace-message success">{{ message() }}</div> }
+  @if (error()) { <div class="workspace-message error">{{ error() }}</div> }
+  <div class="policy-row">
+    @for (policy of policies(); track policy.id) {
+      <article><span class="status" [class.live]="policy.enabled">{{ policy.enabled ? 'ENABLED' : 'DISABLED' }}</span><b>{{ policy.name }}</b><small>{{ policy.allowed_marking_refs.length }} allowed markings · {{ policy.max_objects }} object limit · approval required</small>@if (auth.user()?.role === 'ADMIN') { <button type="button" class="secondary-button" [disabled]="busy() !== null" (click)="togglePolicy(policy)">{{ policy.enabled ? 'Disable' : 'Enable' }}</button> }</article>
+    } @empty { <div class="empty-state">No export destinations are allowlisted.</div> }
+  </div>
+  <div class="request-grid">
+    <div class="request-builder">
+      <h3>Prepare immutable payload</h3>
+      <label><span>Enabled policy</span><select [value]="policyId()" (change)="selectPolicy($event)"><option value="">Select policy</option>@for (policy of policies(); track policy.id) { @if (policy.enabled) { <option [value]="policy.id">{{ policy.name }}</option> } }</select></label>
+      <div class="evidence-list">@for (item of evidence(); track item.evidence_id) { <button type="button" [disabled]="!item.eligible" [class.selected]="selectedEvidence().has(item.evidence_id)" (click)="toggleEvidence(item)"><span>{{ item.entity_type }} · {{ item.polarity }}</span><b>{{ item.normalized_value }}</b><small>{{ item.eligible ? item.claim : item.reason }}</small></button> } @empty { <p>Select a policy to inspect exportable reviewed evidence.</p> }</div>
+      <label><span>Risk and sharing rationale</span><textarea minlength="20" [value]="riskSummary()" (input)="update('riskSummary', $event)" placeholder="Why this data may be shared with this destination"></textarea></label>
+      <button type="button" class="primary-button" [disabled]="busy() !== null || !policyId() || selectedEvidence().size === 0 || riskSummary().trim().length < 20" (click)="requestExport()">Request independent approval</button>
+    </div>
+    <div class="approval-ledger">
+      <h3>Approval and delivery ledger</h3>
+      @if (auth.user()?.role === 'ADMIN') { <label><span>Independent review rationale</span><textarea minlength="20" [value]="rationale()" (input)="update('rationale', $event)" placeholder="Review decision and constraints"></textarea></label> }
+      @for (request of requests(); track request.id) {
+        <article><header><span [class.good]="request.status === 'DELIVERED'">{{ request.status.replaceAll('_', ' ') }}</span><time>{{ request.requested_at | date:'short' }}</time></header><b>{{ request.object_count }} objects · {{ request.bundle_id }}</b><small>SHA-256 {{ request.bundle_hash }}</small>@if (request.error) { <p>{{ request.error }}</p> }<div class="actions">@if (request.status === 'PENDING_APPROVAL' && auth.user()?.role === 'ADMIN' && request.requested_by !== auth.user()?.id) { <button type="button" class="secondary-button" [disabled]="rationale().trim().length < 20 || busy() !== null" (click)="resolve(request, 'REJECTED')">Reject</button><button type="button" class="primary-button" [disabled]="rationale().trim().length < 20 || busy() !== null" (click)="resolve(request, 'APPROVED')">Approve</button> } @if (request.status === 'APPROVED' || request.status === 'FAILED') { <button type="button" class="primary-button" [disabled]="busy() !== null" (click)="deliver(request)">{{ request.status === 'FAILED' ? 'Retry delivery' : 'Deliver' }}</button> }</div></article>
+      } @empty { <div class="empty-state">No export requests recorded.</div> }
+    </div>
+  </div>
+  <p class="boundary-note">Export is off by default. Delivery requires current TAXII write authorization, matching object markings, a frozen payload hash, and approval by a different administrator.</p>
+</section>

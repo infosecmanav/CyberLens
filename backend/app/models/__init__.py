@@ -15,6 +15,8 @@ from app.models.intelligence import (
     SourceRecord,
     TaxiiCollection,
     TaxiiCollectionRun,
+    TaxiiExportPolicy,
+    TaxiiExportRequest,
     TaxiiServer,
 )
 from app.models.operations import (
@@ -59,6 +61,8 @@ __all__ = [
     "SourceRecord",
     "TaxiiCollection",
     "TaxiiCollectionRun",
+    "TaxiiExportPolicy",
+    "TaxiiExportRequest",
     "TaxiiServer",
     "User",
     "AnalystDecision",

@@ -21,6 +21,7 @@ from app.models.enums import (
     CollectionJobStatus,
     EntityType,
     EvidencePolarity,
+    ExportStatus,
     ImplementationStatus,
     SourceCategory,
     SourceHealth,
@@ -407,6 +408,57 @@ class EnrichmentItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     new_observation_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
 
     run: Mapped[EnrichmentRun] = relationship(back_populates="items")
+
+
+class TaxiiExportPolicy(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "taxii_export_policies"
+
+    collection_id: Mapped[UUID] = mapped_column(
+        ForeignKey("taxii_collections.id", ondelete="CASCADE"),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
+    enabled: Mapped[bool] = mapped_column(default=False, nullable=False)
+    allowed_marking_refs: Mapped[list[str]] = mapped_column(JSON, default=list)
+    allow_unmarked: Mapped[bool] = mapped_column(default=False, nullable=False)
+    max_objects: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
+    require_approval: Mapped[bool] = mapped_column(default=True, nullable=False)
+    created_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+
+
+class TaxiiExportRequest(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "taxii_export_requests"
+
+    policy_id: Mapped[UUID] = mapped_column(
+        ForeignKey("taxii_export_policies.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    approval_id: Mapped[UUID] = mapped_column(
+        ForeignKey("approval_requests.id", ondelete="RESTRICT"),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    requested_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    status: Mapped[ExportStatus] = mapped_column(
+        Enum(ExportStatus, native_enum=False, length=24), index=True, nullable=False
+    )
+    evidence_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    bundle_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    bundle_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    stix_bundle: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    object_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    delivery_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    delivery_receipt: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    error: Mapped[str | None] = mapped_column(Text)
 
 
 class AuditEvent(UUIDPrimaryKeyMixin, Base):

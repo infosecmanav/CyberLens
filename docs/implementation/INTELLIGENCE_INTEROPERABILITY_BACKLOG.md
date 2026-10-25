@@ -20,6 +20,8 @@ Version 1.6 completes the read-only collection portion of Slice 4. Administrator
 
 Version 1.7 completes the automated enrichment portion of Slice 3. Administrators define explicit entity and connector allowlists, cadence, and per-run entity budgets. New canonical entities are processed once per policy through the existing connector contract, with durable collection-job links, per-source outcomes, reused and new observation IDs, and audit events. Demonstration sources are blocked from automation, and `NO_RESULT` creates neither an observation nor a safety verdict. Controlled export remains in the backlog.
 
+Version 1.8 completes the controlled sharing portion of Slice 4. Export policies are created disabled and bind one currently write-authorized TAXII collection to explicit marking rules and an object budget. Only analyst-reviewed evidence backed by STIX 2.1 Indicators can enter a frozen bundle. The payload preserves markings and available marking definitions, records a SHA-256 hash, requires approval by a different administrator, rechecks write authorization at delivery, and stores an immutable audit trail and bounded TAXII receipt.
+
 Upstream verification on 2026-10-25 found that OpenTAXII documents TAXII 1.0 and 1.1 support and describes the project as feature-complete with bug-fix maintenance. It does not establish TAXII 2.x or 2.1 support. Any future TAXII 2.1 client will therefore use a separately verified implementation and compatibility suite.
 
 ## Slice 1 — research and contract fixtures

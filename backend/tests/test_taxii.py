@@ -142,6 +142,39 @@ async def test_taxii_stops_when_pagination_exceeds_the_configured_budget() -> No
             await TaxiiClient(http_client).poll(server, readable_collection())
 
 
+@pytest.mark.asyncio
+async def test_taxii_21_object_delivery_uses_fixed_collection_endpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(request)
+        return httpx.Response(
+            202,
+            json={"id": "status--fixture", "status": "pending", "pending_count": 1},
+            request=request,
+        )
+
+    monkeypatch.setenv("FIXTURE_TAXII_TOKEN", "write-token")
+    server = configured_server(auth_environment_variable="FIXTURE_TAXII_TOKEN")
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        receipt = await TaxiiClient(http_client).send_objects(
+            server,
+            readable_collection(),
+            [{"type": "indicator", "id": "indicator--fixture"}],
+        )
+    assert receipt == {
+        "http_status": 202,
+        "id": "status--fixture",
+        "status": "pending",
+        "pending_count": 1,
+    }
+    assert captured[0].url.path == "/api/collections/malware-indicators/objects/"
+    assert captured[0].headers["authorization"] == "Bearer write-token"
+    assert captured[0].headers["content-type"] == "application/taxii+json;version=2.1"
+
+
 class StubTaxiiClient:
     async def discover(
         self, server: TaxiiServer

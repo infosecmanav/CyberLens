@@ -122,6 +122,55 @@ class TaxiiClient:
             raise TaxiiError("TAXII server returned an invalid document")
         return payload
 
+    async def send_objects(
+        self,
+        server: TaxiiServer,
+        collection: TaxiiCollection,
+        objects: list[dict[str, Any]],
+    ) -> dict[str, object]:
+        if not server.api_root_url:
+            raise TaxiiError("Run discovery before exporting to a TAXII collection")
+        base = _same_authority(server.discovery_url, server.api_root_url)
+        collection_id = quote(collection.collection_id, safe="")
+        url = f"{base}collections/{collection_id}/objects/"
+        headers = {"Accept": TAXII_MEDIA_TYPE, "Content-Type": TAXII_MEDIA_TYPE}
+        if server.auth_environment_variable:
+            token = os.getenv(server.auth_environment_variable)
+            if not token:
+                raise TaxiiError(
+                    f"Credential environment variable {server.auth_environment_variable} is not set"
+                )
+            headers["Authorization"] = f"Bearer {token}"
+        try:
+            response = await self._http.post(
+                url,
+                json={"objects": objects},
+                headers=headers,
+                timeout=float(server.timeout_seconds),
+            )
+        except httpx.TimeoutException as exc:
+            raise TaxiiError("TAXII export timed out") from exc
+        except httpx.HTTPError as exc:
+            raise TaxiiError("TAXII export request failed") from exc
+        if response.status_code in {401, 403}:
+            raise TaxiiError("TAXII server denied write access to the configured relationship")
+        if response.status_code == 429:
+            raise TaxiiError("TAXII server rate limit reached; retry later")
+        if response.status_code not in {200, 202}:
+            raise TaxiiError(f"TAXII export returned HTTP {response.status_code}")
+        receipt: dict[str, object] = {"http_status": response.status_code}
+        if response.content:
+            try:
+                payload = response.json()
+            except ValueError:
+                payload = None
+            if isinstance(payload, dict):
+                for key in ("id", "status", "pending_count", "success_count", "failure_count"):
+                    value = payload.get(key)
+                    if isinstance(value, str | int):
+                        receipt[key] = value
+        return receipt
+
     async def discover(self, server: TaxiiServer) -> tuple[str, list[TaxiiCollectionDocument]]:
         discovery = await self._get(server.discovery_url, server)
         roots = discovery.get("api_roots")

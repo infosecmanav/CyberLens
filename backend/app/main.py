@@ -13,6 +13,7 @@ from app.api.routes import (
     cases,
     detections,
     enrichment,
+    export,
     graph,
     health,
     intelligence,
@@ -127,6 +128,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(operations.router, prefix=active_settings.api_v1_prefix)
     application.include_router(taxii.router, prefix=active_settings.api_v1_prefix)
     application.include_router(enrichment.router, prefix=active_settings.api_v1_prefix)
+    application.include_router(export.router, prefix=active_settings.api_v1_prefix)
     return application
 
 
