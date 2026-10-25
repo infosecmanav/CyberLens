@@ -1,6 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { Component, effect, inject, input, signal } from '@angular/core';
-import { ImportBatchDetail, ImportBatchSummary } from '../../core/intelligence.models';
+import {
+  ImportBatchDetail,
+  ImportBatchSummary,
+  StixImportFilterDefinition,
+} from '../../core/intelligence.models';
 import { IntelligenceService } from '../../core/intelligence.service';
 
 @Component({
@@ -45,6 +49,20 @@ export class StixImportHistory {
 
   protected friendly(value: string): string {
     return value.replaceAll('_', ' ').toLowerCase();
+  }
+
+  protected filterLabels(filter: StixImportFilterDefinition): string[] {
+    const labels: string[] = [];
+    if (filter.entity_types?.length) labels.push(`Types: ${filter.entity_types.join(', ')}`);
+    if (filter.minimum_confidence !== undefined) {
+      labels.push(`Confidence ≥ ${filter.minimum_confidence}`);
+    }
+    if (filter.valid_from_start) labels.push(`From ${filter.valid_from_start}`);
+    if (filter.valid_from_end) labels.push(`Through ${filter.valid_from_end}`);
+    if (filter.required_marking_refs?.length) {
+      labels.push(`${filter.required_marking_refs.length} required marking(s)`);
+    }
+    return labels;
   }
 
   private load(): void {

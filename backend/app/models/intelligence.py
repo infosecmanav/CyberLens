@@ -214,6 +214,7 @@ class ImportBatch(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(40), index=True, nullable=False)
     source_reference: Mapped[str | None] = mapped_column(String(1000))
     contract: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    filter_definition: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     received_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     accepted_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     imported_observations: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -222,6 +223,7 @@ class ImportBatch(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     reused_entities: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     rejected_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     skipped_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    filtered_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     objects: Mapped[list["ImportObjectOutcome"]] = relationship(

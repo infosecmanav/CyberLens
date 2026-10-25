@@ -46,6 +46,8 @@ Version 1.2 implements the first local interoperability boundary: an authenticat
 
 Version 1.3 makes that boundary durable. Every submission creates an import batch containing the bundle hash, contract, source, submitter, counts, status, and completion time. Each object creates an ordered outcome. Imported or deduplicated outcomes link to the canonical entity and observation; rejected or skipped outcomes retain the bounded raw object and content hash as a quarantine record. Batch history is authenticated and filterable by status or the presence of issues.
 
+Version 1.4 applies an optional, validated filter after STIX parsing and before persistence. The filter can constrain supported entity types, minimum confidence, an inclusive `valid_from` window, and required marking references. Filtered objects create ordered `FILTERED` outcomes without creating entities or observations. Invalid objects remain rejected and unsupported objects remain skipped, so filtering cannot conceal parsing failures. The canonical filter definition and filtered count are stored with the batch and returned by the immediate and historical APIs.
+
 ## Operational controls
 
 Detection candidates require existing evidence and documented telemetry, false positives, assumptions, and limits. Cases and playbooks emit audit events. All task and playbook execution is dry-run. High-impact work enters `WAITING_APPROVAL`; only an administrator can resolve its approval record.

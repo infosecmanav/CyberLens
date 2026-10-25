@@ -10,7 +10,7 @@
             <span class="batch-state" [class.issues]="batch.rejected_objects + batch.skipped_objects > 0">{{ friendly(batch.status) }}</span>
             <strong>{{ batch.bundle_id }}</strong>
             <small>{{ batch.created_at | date: 'medium' }} · {{ batch.accepted_objects }}/{{ batch.received_objects }} accepted</small>
-            <b>{{ batch.imported_observations }} new · {{ batch.deduplicated_observations }} reused</b>
+            <b>{{ batch.imported_observations }} new · {{ batch.deduplicated_observations }} reused · {{ batch.filtered_objects }} filtered</b>
           </button>
         }
       </div>
@@ -24,11 +24,18 @@
       <section class="batch-detail">
         <header><div><span>OBJECT OUTCOMES</span><h3>{{ detail.bundle_id }}</h3></div><button type="button" (click)="close()">Close</button></header>
         <div class="contract"><span>Contract</span><strong>{{ detail.format }}</strong><small>{{ detail.bundle_hash }}</small></div>
+        @if (filterLabels(detail.filter_definition); as filters) {
+          @if (filters.length) {
+            <div class="saved-filters"><span>Saved filter</span><div>@for (filter of filters; track filter) { <b>{{ filter }}</b> }</div></div>
+          } @else {
+            <div class="saved-filters"><span>Saved filter</span><div><small>No filtering criteria were applied.</small></div></div>
+          }
+        }
         @if (detail.objects.length) {
           <div class="outcome-list">
             @for (item of detail.objects; track item.id) {
               <article>
-                <span [class.rejected]="item.disposition === 'REJECTED'" [class.skipped]="item.disposition === 'SKIPPED'">{{ item.disposition }}</span>
+                <span [class.filtered]="item.disposition === 'FILTERED'" [class.rejected]="item.disposition === 'REJECTED'" [class.skipped]="item.disposition === 'SKIPPED'">{{ item.disposition }}</span>
                 <div><strong>Object {{ item.object_index + 1 }} · {{ item.code }}</strong><p>{{ item.message }}</p><small>{{ item.external_id || 'No external identifier' }}</small></div>
               </article>
             }

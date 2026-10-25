@@ -32,6 +32,13 @@ STIX_IMPORT_CONTRACT: dict[str, Any] = {
     "entity_types": ["IPV4", "IPV6", "DOMAIN", "URL", "EMAIL", "MD5", "SHA1", "SHA256"],
     "maximum_objects": 500,
     "maximum_bytes": MAX_STIX_BUNDLE_BYTES,
+    "filter_fields": [
+        "entity_types",
+        "minimum_confidence",
+        "valid_from_start",
+        "valid_from_end",
+        "required_marking_refs",
+    ],
 }
 
 _PATTERN_MAPPINGS: tuple[tuple[re.Pattern[str], EntityType], ...] = (
@@ -51,9 +58,32 @@ _STIX_ID = re.compile(r"^indicator--[0-9a-fA-F-]{36}$")
 class StixIssue:
     object_index: int
     external_id: str | None
-    disposition: Literal["REJECTED", "SKIPPED"]
+    disposition: Literal["FILTERED", "REJECTED", "SKIPPED"]
     code: str
     message: str
+
+
+@dataclass(frozen=True)
+class StixImportFilterDefinition:
+    entity_types: frozenset[EntityType]
+    minimum_confidence: int | None
+    valid_from_start: datetime | None
+    valid_from_end: datetime | None
+    required_marking_refs: frozenset[str]
+
+    def as_record(self) -> dict[str, Any]:
+        record: dict[str, Any] = {}
+        if self.entity_types:
+            record["entity_types"] = sorted(entity_type.value for entity_type in self.entity_types)
+        if self.minimum_confidence is not None:
+            record["minimum_confidence"] = self.minimum_confidence
+        if self.valid_from_start is not None:
+            record["valid_from_start"] = self.valid_from_start.isoformat()
+        if self.valid_from_end is not None:
+            record["valid_from_end"] = self.valid_from_end.isoformat()
+        if self.required_marking_refs:
+            record["required_marking_refs"] = sorted(self.required_marking_refs)
+        return record
 
 
 @dataclass(frozen=True)
@@ -106,6 +136,10 @@ class StixImportSummary:
     @property
     def skipped_objects(self) -> int:
         return sum(issue.disposition == "SKIPPED" for issue in self.issues)
+
+    @property
+    def filtered_objects(self) -> int:
+        return sum(issue.disposition == "FILTERED" for issue in self.issues)
 
 
 def canonical_bundle_size(bundle: dict[str, Any]) -> int:
@@ -249,6 +283,57 @@ def parse_stix_objects(
     return parsed, issues
 
 
+def apply_stix_filter(
+    indicators: list[ParsedStixIndicator],
+    definition: StixImportFilterDefinition,
+) -> tuple[list[ParsedStixIndicator], list[StixIssue]]:
+    accepted: list[ParsedStixIndicator] = []
+    filtered: list[StixIssue] = []
+    for indicator in indicators:
+        code: str | None = None
+        message: str | None = None
+        if (
+            definition.entity_types
+            and indicator.normalized.entity_type not in definition.entity_types
+        ):
+            code = "FILTER_ENTITY_TYPE"
+            message = "The indicator type is outside the selected import filter."
+        elif definition.minimum_confidence is not None and (
+            indicator.confidence is None
+            or indicator.confidence < definition.minimum_confidence / 100
+        ):
+            code = "FILTER_MINIMUM_CONFIDENCE"
+            message = "The indicator does not meet the selected minimum confidence."
+        elif (
+            definition.valid_from_start is not None
+            and indicator.observed_at < definition.valid_from_start
+        ) or (
+            definition.valid_from_end is not None
+            and indicator.observed_at > definition.valid_from_end
+        ):
+            code = "FILTER_VALID_FROM_WINDOW"
+            message = "The indicator valid_from timestamp is outside the selected window."
+        elif definition.required_marking_refs and not definition.required_marking_refs.issubset(
+            set(indicator.attributes["object_marking_refs"])
+        ):
+            code = "FILTER_REQUIRED_MARKING"
+            message = "The indicator does not contain every required marking reference."
+
+        if code is None or message is None:
+            accepted.append(indicator)
+            continue
+        filtered.append(
+            StixIssue(
+                object_index=indicator.object_index,
+                external_id=indicator.external_id,
+                disposition="FILTERED",
+                code=code,
+                message=message,
+            )
+        )
+    return accepted, filtered
+
+
 def _content_hash(record: dict[str, Any]) -> str:
     encoded = json.dumps(record, sort_keys=True, separators=(",", ":"), default=str).encode()
     return hashlib.sha256(encoded).hexdigest()
@@ -261,11 +346,15 @@ async def import_stix_bundle(
     objects: list[dict[str, Any]],
     source_reference: str | None,
     actor_id: UUID,
+    filter_definition: StixImportFilterDefinition,
 ) -> StixImportSummary:
     source = await session.scalar(select(Source).where(Source.source_id == STIX_IMPORT_SOURCE_ID))
     if source is None:
         raise RuntimeError("The manual STIX import source is not seeded")
     parsed, issues = parse_stix_objects(objects)
+    parsed, filtered = apply_stix_filter(parsed, filter_definition)
+    issues.extend(filtered)
+    issues.sort(key=lambda issue: issue.object_index)
     items: list[PersistedStixIndicator] = []
     created_entity_ids: set[UUID] = set()
     reused_entity_ids: set[UUID] = set()
@@ -281,6 +370,7 @@ async def import_stix_bundle(
         status="RUNNING",
         source_reference=source_reference,
         contract=STIX_IMPORT_CONTRACT,
+        filter_definition=filter_definition.as_record(),
         received_objects=len(objects),
     )
     session.add(import_batch)
@@ -410,7 +500,11 @@ async def import_stix_bundle(
         reused_entities=len(reused_entity_ids),
         completed_at=completed_at,
     )
-    import_batch.status = "COMPLETED_WITH_ISSUES" if issues else "COMPLETED"
+    import_batch.status = (
+        "COMPLETED_WITH_ISSUES"
+        if summary.rejected_objects or summary.skipped_objects
+        else "COMPLETED"
+    )
     import_batch.accepted_objects = len(summary.items)
     import_batch.imported_observations = summary.imported_observations
     import_batch.deduplicated_observations = summary.deduplicated_observations
@@ -418,6 +512,7 @@ async def import_stix_bundle(
     import_batch.reused_entities = summary.reused_entities
     import_batch.rejected_objects = summary.rejected_objects
     import_batch.skipped_objects = summary.skipped_objects
+    import_batch.filtered_objects = summary.filtered_objects
     import_batch.completed_at = completed_at
     emit_audit(
         session,
@@ -434,6 +529,8 @@ async def import_stix_bundle(
             "deduplicated_observations": summary.deduplicated_observations,
             "rejected_objects": summary.rejected_objects,
             "skipped_objects": summary.skipped_objects,
+            "filtered_objects": summary.filtered_objects,
+            "filter_definition": filter_definition.as_record(),
         },
     )
     await session.commit()

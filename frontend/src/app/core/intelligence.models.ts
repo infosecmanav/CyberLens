@@ -47,9 +47,17 @@ export interface EntityListResponse {
 export interface StixImportIssue {
   object_index: number;
   external_id: string | null;
-  disposition: 'REJECTED' | 'SKIPPED';
+  disposition: 'FILTERED' | 'REJECTED' | 'SKIPPED';
   code: string;
   message: string;
+}
+
+export interface StixImportFilterDefinition {
+  entity_types?: string[];
+  minimum_confidence?: number;
+  valid_from_start?: string;
+  valid_from_end?: string;
+  required_marking_refs?: string[];
 }
 
 export interface StixImportedObservation {
@@ -73,6 +81,8 @@ export interface StixImportResponse {
   reused_entities: number;
   rejected_objects: number;
   skipped_objects: number;
+  filtered_objects: number;
+  filter_definition: StixImportFilterDefinition;
   completed_at: string;
   items: StixImportedObservation[];
   issues: StixImportIssue[];
@@ -93,6 +103,7 @@ export interface ImportBatchSummary {
   reused_entities: number;
   rejected_objects: number;
   skipped_objects: number;
+  filtered_objects: number;
   created_at: string;
   completed_at: string | null;
 }
@@ -113,6 +124,7 @@ export interface ImportObjectOutcome {
 export interface ImportBatchDetail extends ImportBatchSummary {
   bundle_hash: string;
   contract: Record<string, unknown>;
+  filter_definition: StixImportFilterDefinition;
   objects: ImportObjectOutcome[];
 }
 

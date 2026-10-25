@@ -76,6 +76,8 @@ def test_stix_import_preserves_provenance_and_reports_unsupported_objects(
     assert payload["created_entities"] == 2
     assert payload["skipped_objects"] == 1
     assert payload["rejected_objects"] == 0
+    assert payload["filtered_objects"] == 0
+    assert payload["filter_definition"] == {}
     assert {item["normalized_value"] for item in payload["items"]} == {
         "example.test",
         "a" * 64,
@@ -183,6 +185,97 @@ def test_stix_import_enforces_serialized_size_limit(
     )
     assert response.status_code == 413
     assert response.json()["detail"] == "STIX bundle exceeds the 2 MiB import limit"
+
+
+@pytest.mark.parametrize(
+    ("filters", "expected_code"),
+    [
+        ({"entity_types": ["DOMAIN"]}, "FILTER_ENTITY_TYPE"),
+        ({"minimum_confidence": 80}, "FILTER_MINIMUM_CONFIDENCE"),
+        ({"valid_from_end": "2026-10-20T23:59:59Z"}, "FILTER_VALID_FROM_WINDOW"),
+        (
+            {
+                "required_marking_refs": [
+                    "marking-definition--bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+                ]
+            },
+            "FILTER_REQUIRED_MARKING",
+        ),
+    ],
+)
+def test_stix_import_applies_and_persists_reproducible_filters(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    filters: dict[str, Any],
+    expected_code: str,
+) -> None:
+    bundle = load_bundle("valid_bundle.json")
+    bundle["objects"] = bundle["objects"][:2]
+    response = client.post(
+        "/api/v1/intelligence/imports/stix-bundles",
+        json={"bundle": bundle, "filters": filters},
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["received_objects"] == 2
+    assert payload["accepted_objects"] == 1
+    assert payload["filtered_objects"] == 1
+    assert payload["skipped_objects"] == 0
+    expected_definition = filters.copy()
+    if "valid_from_end" in expected_definition:
+        expected_definition["valid_from_end"] = "2026-10-20T23:59:59+00:00"
+    assert payload["filter_definition"] == expected_definition
+    assert payload["items"][0]["normalized_value"] == "example.test"
+    filtered_issue = next(
+        issue for issue in payload["issues"] if issue["disposition"] == "FILTERED"
+    )
+    assert filtered_issue["code"] == expected_code
+
+    detail = client.get(
+        f"/api/v1/intelligence/imports/{payload['import_id']}", headers=auth_headers
+    )
+    assert detail.status_code == 200
+    assert detail.json()["status"] == "COMPLETED"
+    assert detail.json()["filter_definition"] == expected_definition
+    assert detail.json()["filtered_objects"] == 1
+    filtered_outcome = next(
+        item for item in detail.json()["objects"] if item["disposition"] == "FILTERED"
+    )
+    assert filtered_outcome["code"] == expected_code
+    assert filtered_outcome["raw_record"]["type"] == "indicator"
+    assert filtered_outcome["entity_id"] is None
+    assert filtered_outcome["observation_id"] is None
+
+    clean_history = client.get(
+        "/api/v1/intelligence/imports?has_issues=false", headers=auth_headers
+    )
+    assert clean_history.status_code == 200
+    assert clean_history.json()["total"] == 1
+
+
+@pytest.mark.parametrize(
+    "filters",
+    [
+        {"entity_types": ["CVE"]},
+        {
+            "valid_from_start": "2026-10-22T00:00:00Z",
+            "valid_from_end": "2026-10-21T00:00:00Z",
+        },
+        {"required_marking_refs": ["not-a-marking-definition"]},
+    ],
+)
+def test_stix_import_rejects_invalid_filter_definitions(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    filters: dict[str, Any],
+) -> None:
+    response = client.post(
+        "/api/v1/intelligence/imports/stix-bundles",
+        json={"bundle": load_bundle("valid_bundle.json"), "filters": filters},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
 
 
 def test_import_history_filters_and_quarantines_object_outcomes(

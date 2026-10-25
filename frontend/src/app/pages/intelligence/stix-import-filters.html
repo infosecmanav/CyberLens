@@ -1,0 +1,24 @@
+<section class="filter-console">
+  <header>
+    <div><span>PRE-IMPORT FILTER</span><strong>Reduce feed noise with saved criteria</strong></div>
+    <div><b>{{ activeCount() }} active</b>@if (activeCount()) { <button type="button" (click)="clear()">Clear</button> }</div>
+  </header>
+  <div class="type-filters">
+    <span>Observable types</span>
+    <div>
+      @for (type of entityTypes; track type) {
+        <label [class.active]="selectedTypes().includes(type)">
+          <input type="checkbox" [checked]="selectedTypes().includes(type)" (change)="toggleType($event, type)" />
+          {{ friendly(type) }}
+        </label>
+      }
+    </div>
+  </div>
+  <div class="criteria-grid">
+    <label><span>Minimum confidence</span><input type="number" min="0" max="100" placeholder="Any" [value]="minimumConfidence()" (input)="updateMinimumConfidence($event)" /><small>0–100; missing confidence is excluded</small></label>
+    <label><span>Valid from · start</span><input type="datetime-local" [value]="validFromStart()" (input)="updateValidFromStart($event)" /><small>Inclusive, in your local time</small></label>
+    <label><span>Valid from · end</span><input type="datetime-local" [value]="validFromEnd()" (input)="updateValidFromEnd($event)" /><small>Inclusive, in your local time</small></label>
+    <label><span>Required markings</span><input type="text" placeholder="marking-definition--…" [value]="requiredMarkings()" (input)="updateRequiredMarkings($event)" /><small>Comma-separated; every ID must match</small></label>
+  </div>
+  <p>Criteria apply only after STIX validation. Invalid objects remain visible as rejected outcomes.</p>
+</section>

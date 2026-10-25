@@ -47,6 +47,7 @@
   <div class="import-content">
     <div class="import-boundary"><strong>Supported contract</strong><span>Indicator objects with one IPv4, IPv6, domain, URL, email, MD5, SHA-1, or SHA-256 equality pattern. Other objects are reported and skipped.</span></div>
     <form (submit)="submitStixImport($event)">
+      <app-stix-import-filters (filtersChange)="updateStixFilters($event)" />
       <label class="file-picker">
         <input type="file" accept="application/json,.json" (change)="selectStixFile($event)" />
         <span>{{ stixFileName() || 'Choose STIX JSON bundle' }}</span>
@@ -66,6 +67,7 @@
         <div class="import-metrics">
           <span><strong>{{ imported.received_objects }}</strong>Received</span>
           <span><strong>{{ imported.accepted_objects }}</strong>Accepted</span>
+          <span><strong>{{ imported.filtered_objects }}</strong>Filtered</span>
           <span><strong>{{ imported.rejected_objects }}</strong>Rejected</span>
           <span><strong>{{ imported.skipped_objects }}</strong>Skipped</span>
         </div>
@@ -81,7 +83,7 @@
         @if (imported.issues.length) {
           <div class="import-issues">
             @for (issue of imported.issues; track issue.object_index) {
-              <p><span [class.rejected]="issue.disposition === 'REJECTED'">{{ issue.disposition }}</span><strong>Object {{ issue.object_index + 1 }}</strong>{{ issue.message }}</p>
+              <p><span [class.rejected]="issue.disposition === 'REJECTED'" [class.filtered]="issue.disposition === 'FILTERED'">{{ issue.disposition }}</span><strong>Object {{ issue.object_index + 1 }}</strong>{{ issue.message }}</p>
             }
           </div>
         }

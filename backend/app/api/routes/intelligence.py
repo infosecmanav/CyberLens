@@ -10,6 +10,7 @@ from app.intelligence.normalization import NormalizationError, normalize_entity
 from app.intelligence.stix_import import (
     MAX_STIX_BUNDLE_BYTES,
     STIX_IMPORT_SOURCE_ID,
+    StixImportFilterDefinition,
     canonical_bundle_size,
     import_stix_bundle,
 )
@@ -118,12 +119,20 @@ async def import_stix(
             status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail="STIX bundle exceeds the 2 MiB import limit",
         )
+    filter_definition = StixImportFilterDefinition(
+        entity_types=frozenset(payload.filters.entity_types),
+        minimum_confidence=payload.filters.minimum_confidence,
+        valid_from_start=payload.filters.valid_from_start,
+        valid_from_end=payload.filters.valid_from_end,
+        required_marking_refs=frozenset(payload.filters.required_marking_refs),
+    )
     summary = await import_stix_bundle(
         session,
         bundle_id=payload.bundle.id,
         objects=payload.bundle.objects,
         source_reference=str(payload.source_reference) if payload.source_reference else None,
         actor_id=user.id,
+        filter_definition=filter_definition,
     )
     return StixImportResponse(
         import_id=summary.import_id,
@@ -137,6 +146,8 @@ async def import_stix(
         reused_entities=summary.reused_entities,
         rejected_objects=summary.rejected_objects,
         skipped_objects=summary.skipped_objects,
+        filtered_objects=summary.filtered_objects,
+        filter_definition=filter_definition.as_record(),
         completed_at=summary.completed_at,
         items=[
             StixImportedObservation(
@@ -178,6 +189,7 @@ def _import_summary(batch: ImportBatch, source_id: str) -> ImportBatchSummary:
         reused_entities=batch.reused_entities,
         rejected_objects=batch.rejected_objects,
         skipped_objects=batch.skipped_objects,
+        filtered_objects=batch.filtered_objects,
         created_at=batch.created_at,
         completed_at=batch.completed_at,
     )
@@ -251,6 +263,7 @@ async def get_import(
         **summary.model_dump(),
         bundle_hash=batch.bundle_hash,
         contract=batch.contract,
+        filter_definition=batch.filter_definition,
         objects=[
             ImportObjectOutcomeResponse(
                 id=item.id,

@@ -7,6 +7,7 @@ import {
   ImportBatchListResponse,
   IntelligenceObservation,
   LookupResponse,
+  StixImportFilterDefinition,
   StixImportResponse,
 } from './intelligence.models';
 
@@ -19,6 +20,7 @@ export interface LookupPayload {
 export interface StixImportPayload {
   bundle: Record<string, unknown>;
   source_reference?: string;
+  filters?: StixImportFilterDefinition;
 }
 
 @Injectable({ providedIn: 'root' })

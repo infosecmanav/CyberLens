@@ -6,14 +6,16 @@ import {
   IntelligenceEntity,
   IntelligenceObservation,
   LookupResponse,
+  StixImportFilterDefinition,
   StixImportResponse,
 } from '../../core/intelligence.models';
 import { IntelligenceService } from '../../core/intelligence.service';
+import { StixImportFilters } from './stix-import-filters';
 import { StixImportHistory } from './stix-import-history';
 
 @Component({
   selector: 'app-intelligence',
-  imports: [DatePipe, RouterLink, StixImportHistory],
+  imports: [DatePipe, RouterLink, StixImportFilters, StixImportHistory],
   templateUrl: './intelligence.html',
   styleUrl: './intelligence.scss',
 })
@@ -31,6 +33,7 @@ export class Intelligence {
   protected readonly stixBundle = signal<Record<string, unknown> | null>(null);
   protected readonly stixFileName = signal<string | null>(null);
   protected readonly stixSourceReference = signal('');
+  protected readonly stixFilters = signal<StixImportFilterDefinition>({});
   protected readonly importLoading = signal(false);
   protected readonly importError = signal<string | null>(null);
   protected readonly importResult = signal<StixImportResponse | null>(null);
@@ -118,17 +121,23 @@ export class Intelligence {
     this.stixSourceReference.set((event.target as HTMLInputElement).value);
   }
 
+  protected updateStixFilters(filters: StixImportFilterDefinition): void {
+    this.stixFilters.set(filters);
+  }
+
   protected submitStixImport(event: Event): void {
     event.preventDefault();
     const bundle = this.stixBundle();
     if (!bundle || this.importLoading()) return;
     const sourceReference = this.stixSourceReference().trim();
+    const filters = this.stixFilters();
     this.importLoading.set(true);
     this.importError.set(null);
     this.importResult.set(null);
     this.intelligence.importStix({
       bundle,
       ...(sourceReference ? { source_reference: sourceReference } : {}),
+      ...(Object.keys(filters).length ? { filters } : {}),
     }).subscribe({
       next: (response) => {
         this.importResult.set(response);

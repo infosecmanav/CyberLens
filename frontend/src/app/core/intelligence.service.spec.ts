@@ -44,12 +44,18 @@ describe('IntelligenceService', () => {
       id: 'bundle--11111111-1111-4111-8111-111111111111',
       objects: [],
     };
-    service.importStix({ bundle, source_reference: 'https://example.test/collection' }).subscribe();
+    const filters = { entity_types: ['DOMAIN'], minimum_confidence: 70 };
+    service.importStix({
+      bundle,
+      source_reference: 'https://example.test/collection',
+      filters,
+    }).subscribe();
     const request = http.expectOne('/api/v1/intelligence/imports/stix-bundles');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
       bundle,
       source_reference: 'https://example.test/collection',
+      filters,
     });
     request.flush({
       import_id: 'import-id',
@@ -63,6 +69,8 @@ describe('IntelligenceService', () => {
       reused_entities: 0,
       rejected_objects: 0,
       skipped_objects: 0,
+      filtered_objects: 0,
+      filter_definition: filters,
       completed_at: '2026-10-25T00:00:00Z',
       items: [],
       issues: [],
@@ -99,6 +107,8 @@ describe('IntelligenceService', () => {
       reused_entities: 0,
       rejected_objects: 0,
       skipped_objects: 0,
+      filtered_objects: 0,
+      filter_definition: {},
       created_at: '2026-10-25T00:00:00Z',
       completed_at: '2026-10-25T00:00:00Z',
       objects: [],
