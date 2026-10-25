@@ -1,0 +1,18 @@
+{
+  "more": true,
+  "next": "opaque-page-2",
+  "objects": [
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-1111-4111-8111-111111111111",
+      "created": "2026-10-25T14:00:00Z",
+      "modified": "2026-10-25T14:00:00Z",
+      "valid_from": "2026-10-25T14:00:00Z",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "pattern": "[domain-name:value = 'fixture.example']",
+      "confidence": 80
+    }
+  ]
+}

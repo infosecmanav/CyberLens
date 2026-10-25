@@ -10,6 +10,9 @@ from app.models.intelligence import (
     Source,
     SourceCapability,
     SourceRecord,
+    TaxiiCollection,
+    TaxiiCollectionRun,
+    TaxiiServer,
 )
 from app.models.operations import (
     AnalystDecision,
@@ -48,6 +51,9 @@ __all__ = [
     "Source",
     "SourceCapability",
     "SourceRecord",
+    "TaxiiCollection",
+    "TaxiiCollectionRun",
+    "TaxiiServer",
     "User",
     "AnalystDecision",
     "ApprovalRequest",

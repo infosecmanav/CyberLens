@@ -76,6 +76,27 @@ SOURCE_CATALOG: tuple[CatalogSource, ...] = (
         test_state="Parser, persistence, authorization, partial-result, and deduplication tested",
         limitation="STIX 2.1 Indicator objects with one supported equality pattern per object",
     ),
+    CatalogSource(
+        source_id="taxii-2-1",
+        name="Configured TAXII 2.1 collections",
+        category=SourceCategory.CTI,
+        official_url="https://docs.oasis-open.org/cti/taxii/v2.1/taxii-v2.1.html",
+        status=ImplementationStatus.IMPLEMENTED_AND_TESTED,
+        api_documentation_url="https://docs.oasis-open.org/cti/taxii/v2.1/taxii-v2.1.html",
+        access_method="TAXII_2_1_READ_ONLY",
+        auth_scheme="OPTIONAL_BEARER_TOKEN_FROM_ENVIRONMENT",
+        free_access_status="SERVER_POLICY_APPLIES",
+        commercial_usage_status="SERVER_AND_CONTENT_OWNER_POLICY_APPLIES",
+        terms_and_licensing_notes=(
+            "Administrator-configured TAXII 2.1 servers; collection owner terms apply."
+        ),
+        supported_entity_types=("IPV4", "IPV6", "DOMAIN", "URL", "EMAIL", "MD5", "SHA1", "SHA256"),
+        supported_operations=("discover", "manifest", "poll", "import"),
+        rate_limit_policy={"bounded_pages": True, "server_429_honored": True},
+        attribution_requirements="Preserve STIX IDs, markings, raw objects, and collection URL.",
+        test_state="Fixture-tested TAXII 2.1 discovery, collections, manifest, and pagination",
+        limitation="Read-only TAXII 2.1; supported STIX Indicator patterns only",
+    ),
     _source(
         "virustotal",
         "VirusTotal",

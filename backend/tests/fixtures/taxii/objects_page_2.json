@@ -1,0 +1,17 @@
+{
+  "more": false,
+  "objects": [
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--22222222-2222-4222-8222-222222222222",
+      "created": "2026-10-25T14:30:00Z",
+      "modified": "2026-10-25T14:30:00Z",
+      "valid_from": "2026-10-25T14:30:00Z",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "pattern": "[ipv4-addr:value = '198.51.100.77']",
+      "confidence": 75
+    }
+  ]
+}

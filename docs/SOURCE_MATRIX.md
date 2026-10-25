@@ -2,11 +2,11 @@
 
 Generated from `backend/app/intelligence/catalog.py`. Inventory means the source is tracked; it does not mean the source is integrated.
 
-Total entries: **106**.
+Total entries: **107**.
 
 | Category | Count |
 | --- | ---: |
-| Cti | 14 |
+| Cti | 15 |
 | Domain Dns | 22 |
 | Infrastructure | 8 |
 | Knowledge | 6 |
@@ -20,6 +20,7 @@ Total entries: **106**.
 | --- | --- | --- | --- | --- | --- | --- |
 | [AlienVault / LevelBlue OTX](https://otx.alienvault.com) | Cti | To Be Verified | `OTX_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [CIRCL](https://www.circl.lu) | Cti | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [Configured TAXII 2.1 collections](https://docs.oasis-open.org/cti/taxii/v2.1/taxii-v2.1.html) | Cti | Taxii 2 1 Read Only | None declared | IMPLEMENTED_AND_TESTED | Fixture-tested TAXII 2.1 discovery, collections, manifest, and pagination | Read-only TAXII 2.1; supported STIX Indicator patterns only |
 | [Feodo Tracker](https://feodotracker.abuse.ch) | Cti | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Local development fixtures](https://localhost.invalid/fixtures) | Cti | Local Fixture | None declared | IMPLEMENTED_AND_TESTED | Unit tested | Demonstration data only |
 | [MalwareBazaar](https://bazaar.abuse.ch) | Cti | To Be Verified | `ABUSECH_AUTH_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |

@@ -24,6 +24,7 @@ from app.models.enums import (
     ImplementationStatus,
     SourceCategory,
     SourceHealth,
+    TaxiiRunStatus,
 )
 
 
@@ -263,6 +264,80 @@ class ImportObjectOutcome(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     raw_record: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
     import_batch: Mapped[ImportBatch] = relationship(back_populates="objects")
+
+
+class TaxiiServer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "taxii_servers"
+
+    name: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
+    discovery_url: Mapped[str] = mapped_column(String(1000), unique=True, nullable=False)
+    api_root_url: Mapped[str | None] = mapped_column(String(1000))
+    auth_environment_variable: Mapped[str | None] = mapped_column(String(120))
+    enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
+    timeout_seconds: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
+    page_size: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
+    max_pages: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
+    created_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    discovered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str | None] = mapped_column(Text)
+
+    collections: Mapped[list["TaxiiCollection"]] = relationship(
+        back_populates="server", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class TaxiiCollection(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "taxii_collections"
+    __table_args__ = (UniqueConstraint("server_id", "collection_id"),)
+
+    server_id: Mapped[UUID] = mapped_column(
+        ForeignKey("taxii_servers.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    collection_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    can_read: Mapped[bool] = mapped_column(default=False, nullable=False)
+    can_write: Mapped[bool] = mapped_column(default=False, nullable=False)
+    media_types: Mapped[list[str]] = mapped_column(JSON, default=list)
+    selected: Mapped[bool] = mapped_column(default=False, nullable=False)
+    poll_interval_minutes: Mapped[int] = mapped_column(Integer, default=60, nullable=False)
+    added_after_cursor: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    server: Mapped[TaxiiServer] = relationship(back_populates="collections")
+    runs: Mapped[list["TaxiiCollectionRun"]] = relationship(
+        back_populates="collection", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class TaxiiCollectionRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "taxii_collection_runs"
+
+    collection_id: Mapped[UUID] = mapped_column(
+        ForeignKey("taxii_collections.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    triggered_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    status: Mapped[TaxiiRunStatus] = mapped_column(
+        Enum(TaxiiRunStatus, native_enum=False, length=40), index=True, nullable=False
+    )
+    pages_fetched: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    manifest_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    received_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    accepted_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    rejected_objects: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    import_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    cursor_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cursor_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    collection: Mapped[TaxiiCollection] = relationship(back_populates="runs")
 
 
 class AuditEvent(UUIDPrimaryKeyMixin, Base):

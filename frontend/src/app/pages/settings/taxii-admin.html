@@ -1,0 +1,54 @@
+<section class="taxii-console">
+  <header class="console-heading">
+    <div><span>TRUSTED EXCHANGE</span><h2>TAXII 2.1 collection control</h2></div>
+    <p>Read-only polling with fixed HTTPS roots, bounded pages, provenance, and durable cursors.</p>
+  </header>
+
+  <form class="server-form" (submit)="create($event)">
+    <label><span>Relationship name</span><input required minlength="2" placeholder="Industry ISAC" [value]="name()" (input)="update('name', $event)" /></label>
+    <label><span>Discovery URL</span><input required type="url" placeholder="https://exchange.example/taxii2/" [value]="discoveryUrl()" (input)="update('discoveryUrl', $event)" /></label>
+    <label><span>Bearer token environment</span><input placeholder="PARTNER_TAXII_TOKEN" [value]="environmentVariable()" (input)="update('environmentVariable', $event)" /></label>
+    <button class="primary-button" [disabled]="busy() !== null">Save relationship</button>
+  </form>
+
+  @if (message()) { <div class="workspace-message success">{{ message() }}</div> }
+  @if (error()) { <div class="workspace-message error">{{ error() }}</div> }
+
+  <div class="server-grid">
+    @for (server of servers(); track server.id) {
+      <article class="server-card">
+        <header>
+          <div><span class="eyebrow">{{ server.enabled ? 'ENABLED' : 'PAUSED' }}</span><h3>{{ server.name }}</h3><small>{{ server.discovery_url }}</small></div>
+          <button type="button" class="secondary-button" [disabled]="busy() !== null" (click)="discover(server)">{{ busy() === 'discover:' + server.id ? 'Discovering…' : 'Discover' }}</button>
+        </header>
+        <div class="relationship-facts">
+          <span><b>Credential</b>{{ server.auth_environment_variable || 'Public relationship' }} · {{ server.credential_configured || !server.auth_environment_variable ? 'ready' : 'not set' }}</span>
+          <span><b>Limits</b>{{ server.page_size }} objects × {{ server.max_pages }} pages</span>
+          <span><b>Last discovery</b>{{ server.discovered_at ? (server.discovered_at | date:'short') : 'Pending' }}</span>
+        </div>
+        @if (server.last_error) { <p class="server-error">{{ server.last_error }}</p> }
+        <div class="collections">
+          @for (collection of server.collections; track collection.id) {
+            <div class="collection-row">
+              <div class="collection-signal" [class.live]="collection.selected"></div>
+              <div class="collection-copy">
+                <span class="access">{{ collection.can_read ? 'READ' : 'NO READ' }} · {{ collection.can_write ? 'WRITE ADVERTISED' : 'READ ONLY' }}</span>
+                <strong>{{ collection.title }}</strong>
+                <small>{{ collection.description || collection.collection_id }}</small>
+                <p>Cursor {{ collection.added_after_cursor ? (collection.added_after_cursor | date:'medium') : 'not established' }} · next {{ collection.next_run_at ? (collection.next_run_at | date:'short') : 'not scheduled' }}</p>
+              </div>
+              <div class="collection-actions">
+                <button type="button" class="secondary-button" [disabled]="busy() !== null || !collection.can_read" (click)="toggle(collection)">{{ collection.selected ? 'Pause' : 'Schedule' }}</button>
+                <button type="button" class="primary-button" [disabled]="busy() !== null || !collection.selected" (click)="run(collection)">{{ busy() === 'run:' + collection.id ? 'Polling…' : 'Poll now' }}</button>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-collections">Run discovery to retrieve the authorized collection catalog.</div>
+          }
+        </div>
+      </article>
+    } @empty {
+      <div class="empty-collections standalone">No TAXII relationships configured.</div>
+    }
+  </div>
+</section>

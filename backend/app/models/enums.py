@@ -76,6 +76,13 @@ class CollectionJobStatus(StrEnum):
     FAILED = "FAILED"
 
 
+class TaxiiRunStatus(StrEnum):
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    COMPLETED_WITH_ISSUES = "COMPLETED_WITH_ISSUES"
+    FAILED = "FAILED"
+
+
 class InvestigationStatus(StrEnum):
     PLANNING = "PLANNING"
     COLLECTING = "COLLECTING"

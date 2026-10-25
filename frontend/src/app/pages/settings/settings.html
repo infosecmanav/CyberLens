@@ -7,7 +7,10 @@
       <button type="button" class="secondary-button" (click)="logout()">Sign out</button>
     </section>
     <section class="workspace-panel policy-list"><h2>Operational safeguards</h2><ul><li><b>Provider secrets</b><span>Backend environment only</span></li><li><b>Paid API budget</b><span>Zero by default</span></li><li><b>High-impact actions</b><span>Approval required · dry-run only</span></li><li><b>Access token</b><span>Held in memory and cleared on refresh</span></li></ul></section>
-    @if (user.role === 'ADMIN') { <section class="workspace-panel policy-list audit-list"><h2>Recent audit events</h2><ul>@for (event of audit(); track event.id) { <li><b>{{ event.action.replaceAll('_', ' ').toLowerCase() }}</b><span>{{ event.object_type }} · {{ event.occurred_at | date:'short' }}</span></li> } @empty { <li><span>No audit events recorded.</span></li> }</ul></section> }
+    @if (user.role === 'ADMIN') {
+      <app-taxii-admin />
+      <section class="workspace-panel policy-list audit-list"><h2>Recent audit events</h2><ul>@for (event of audit(); track event.id) { <li><b>{{ event.action.replaceAll('_', ' ').toLowerCase() }}</b><span>{{ event.object_type }} · {{ event.occurred_at | date:'short' }}</span></li> } @empty { <li><span>No audit events recorded.</span></li> }</ul></section>
+    }
   } @else {
     <section class="workspace-panel auth-card">
       <div class="auth-tabs"><button [class.active]="mode() === 'login'" (click)="switchMode('login')">Sign in</button><button [class.active]="mode() === 'register'" (click)="switchMode('register')">Create account</button></div>

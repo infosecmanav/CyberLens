@@ -1,0 +1,12 @@
+{
+  "collections": [
+    {
+      "id": "malware-indicators",
+      "title": "Malware indicators",
+      "description": "Sanitized indicator collection",
+      "can_read": true,
+      "can_write": false,
+      "media_types": ["application/stix+json;version=2.1"]
+    }
+  ]
+}

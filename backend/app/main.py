@@ -21,6 +21,7 @@ from app.api.routes import (
     operations,
     playbooks,
     sources,
+    taxii,
 )
 from app.core.config import Settings, get_settings
 from app.db.session import (
@@ -34,6 +35,7 @@ from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.connectors.registry import ConnectorRegistry
 from app.intelligence.connectors.vulnerability import CisaKevConnector, OsvConnector
 from app.intelligence.seed import seed_source_catalog
+from app.intelligence.taxii import TaxiiClient, run_due_collections
 from app.operations.monitoring import run_due_objectives
 from app.operations.seed import seed_playbooks
 
@@ -65,6 +67,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         registry.register(OsvConnector(http_client))
         manager = ConnectorManager(registry)
         application.state.connector_manager = manager
+        taxii_client = TaxiiClient(http_client)
+        application.state.taxii_client = taxii_client
 
         async def monitor_due() -> None:
             while True:
@@ -72,6 +76,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 try:
                     async with get_session_factory()() as session:
                         await run_due_objectives(session, manager)
+                    async with get_session_factory()() as session:
+                        await run_due_collections(session, taxii_client)
                 except Exception:
                     logger.exception("Scheduled monitoring cycle failed")
 
@@ -115,6 +121,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(playbooks.router, prefix=active_settings.api_v1_prefix)
     application.include_router(monitoring.router, prefix=active_settings.api_v1_prefix)
     application.include_router(operations.router, prefix=active_settings.api_v1_prefix)
+    application.include_router(taxii.router, prefix=active_settings.api_v1_prefix)
     return application
 
 

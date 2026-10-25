@@ -347,10 +347,11 @@ async def import_stix_bundle(
     source_reference: str | None,
     actor_id: UUID,
     filter_definition: StixImportFilterDefinition,
+    source_id: str = STIX_IMPORT_SOURCE_ID,
 ) -> StixImportSummary:
-    source = await session.scalar(select(Source).where(Source.source_id == STIX_IMPORT_SOURCE_ID))
+    source = await session.scalar(select(Source).where(Source.source_id == source_id))
     if source is None:
-        raise RuntimeError("The manual STIX import source is not seeded")
+        raise RuntimeError(f"The {source_id} STIX import source is not seeded")
     parsed, issues = parse_stix_objects(objects)
     parsed, filtered = apply_stix_filter(parsed, filter_definition)
     issues.extend(filtered)
@@ -521,7 +522,7 @@ async def import_stix_bundle(
         object_type="stix_bundle",
         object_id=import_batch.id,
         details={
-            "source_id": STIX_IMPORT_SOURCE_ID,
+            "source_id": source_id,
             "bundle_id": bundle_id,
             "received_objects": summary.received_objects,
             "accepted_objects": len(summary.items),

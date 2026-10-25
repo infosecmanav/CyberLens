@@ -1,0 +1,6 @@
+{
+  "title": "Fixture TAXII 2.1",
+  "description": "Sanitized compatibility fixture",
+  "default": "https://taxii.example.test/api/",
+  "api_roots": ["https://taxii.example.test/api/"]
+}

@@ -4,8 +4,9 @@ import { Component, inject, signal } from '@angular/core';
 import { AuthService } from '../../core/auth.service';
 import { AuditEvent } from '../../core/operations.models';
 import { OperationsService } from '../../core/operations.service';
+import { TaxiiAdmin } from './taxii-admin';
 
-@Component({ selector: 'app-settings', imports: [DatePipe], templateUrl: './settings.html', styleUrl: './settings.scss' })
+@Component({ selector: 'app-settings', imports: [DatePipe, TaxiiAdmin], templateUrl: './settings.html', styleUrl: './settings.scss' })
 export class Settings {
   protected readonly auth = inject(AuthService);
   private readonly operations = inject(OperationsService);
