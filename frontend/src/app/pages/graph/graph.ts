@@ -1,13 +1,15 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import cytoscape, { Core, ElementDefinition } from 'cytoscape';
 import { Investigation, InvestigationGraph } from '../../core/operations.models';
 import { OperationsService } from '../../core/operations.service';
+import { ThemeService } from '../../core/theme.service';
 
 @Component({ selector: 'app-graph', imports: [RouterLink], templateUrl: './graph.html', styleUrl: './graph.scss' })
 export class Graph implements AfterViewInit, OnDestroy {
   @ViewChild('graphCanvas') private graphCanvas!: ElementRef<HTMLDivElement>;
   private readonly operations = inject(OperationsService);
+  private readonly theme = inject(ThemeService);
   private graph: Core | null = null;
   private viewReady = false;
   protected readonly investigations = signal<Investigation[]>([]);
@@ -16,13 +18,18 @@ export class Graph implements AfterViewInit, OnDestroy {
   protected readonly error = signal<string | null>(null);
 
   constructor() {
+    effect(() => {
+      this.theme.theme();
+      const data = this.data();
+      if (this.viewReady && data) this.render(data);
+    });
     this.operations.investigations().subscribe({
       next: (response) => this.investigations.set(response.items),
       error: () => this.error.set('Investigations could not be loaded.'),
     });
   }
 
-  ngAfterViewInit(): void { this.viewReady = true; }
+  ngAfterViewInit(): void { this.viewReady = true; const data = this.data(); if (data) this.render(data); }
   ngOnDestroy(): void { this.graph?.destroy(); }
 
   protected load(item: Investigation): void {
@@ -43,14 +50,15 @@ export class Graph implements AfterViewInit, OnDestroy {
       ...data.nodes.map((node) => ({ data: { id: node.id, label: node.value, type: node.entity_type, role: node.role } })),
       ...data.edges.map((edge) => ({ data: { id: edge.id, source: edge.source, target: edge.target, label: this.friendly(edge.relationship_type) } })),
     ];
+    const dark = this.theme.isDark();
     this.graph = cytoscape({
       container: this.graphCanvas.nativeElement,
       elements,
       layout: { name: 'cose', animate: false, padding: 35 },
       style: [
-        { selector: 'node', style: { 'background-color': '#43c89f', color: '#29475b', label: 'data(label)', 'font-size': 9, 'text-valign': 'bottom', 'text-margin-y': 7, width: 24, height: 24 } },
-        { selector: 'node[role = "seed"]', style: { 'background-color': '#287c91', width: 34, height: 34 } },
-        { selector: 'edge', style: { width: 1.5, 'line-color': '#9cb7c1', 'target-arrow-color': '#9cb7c1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', label: 'data(label)', 'font-size': 7, color: '#748995', 'text-background-color': '#ffffff', 'text-background-opacity': 1 } },
+        { selector: 'node', style: { 'background-color': dark ? '#55dab0' : '#43c89f', color: dark ? '#c4d5df' : '#29475b', label: 'data(label)', 'font-size': 9, 'text-valign': 'bottom', 'text-margin-y': 7, width: 24, height: 24 } },
+        { selector: 'node[role = "seed"]', style: { 'background-color': dark ? '#58a7c7' : '#287c91', width: 34, height: 34 } },
+        { selector: 'edge', style: { width: 1.5, 'line-color': dark ? '#466374' : '#9cb7c1', 'target-arrow-color': dark ? '#466374' : '#9cb7c1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', label: 'data(label)', 'font-size': 7, color: dark ? '#8ba3b2' : '#748995', 'text-background-color': dark ? '#0d1b28' : '#ffffff', 'text-background-opacity': 1 } },
       ],
     });
   }

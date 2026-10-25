@@ -1,33 +1,55 @@
 <div class="app-shell">
   <aside class="sidebar" [class.sidebar-open]="menuOpen()">
     <a class="brand" routerLink="/" (click)="closeMenu()">
-      <span class="brand-mark" aria-hidden="true">TL</span>
-      <span><strong>ThreatLens</strong><small>Intelligence workspace</small></span>
+      <span class="brand-mark" aria-hidden="true"><i></i><b>TL</b></span>
+      <span><strong>ThreatLens</strong><small>Security intelligence</small></span>
     </a>
+    <div class="nav-label">Workspace</div>
     <nav aria-label="Primary navigation">
       @for (item of navigation; track item.path) {
         <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/' }" (click)="closeMenu()">
-          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>{{ item.label }}
-          @if (item.badge) { <span class="nav-badge">{{ item.badge }}</span> }
+          <app-security-icon class="nav-icon" [name]="item.icon" />
+          <span>{{ item.label }}</span>
         </a>
       }
     </nav>
     <div class="sidebar-footer">
-      <span class="status-dot"></span>
-      <span><strong>Collection environment</strong><small>Phase 2 · Development</small></span>
+      <span class="status-pulse"><i></i></span>
+      <span><strong>Environment online</strong><small>ThreatLens 1.1 · Development</small></span>
     </div>
   </aside>
   @if (menuOpen()) { <button class="scrim" aria-label="Close navigation" (click)="closeMenu()"></button> }
   <main>
     <header class="topbar">
       <button class="menu-button" aria-label="Open navigation" (click)="toggleMenu()">☰</button>
-      <div class="search-shell">
-        <span aria-hidden="true">⌕</span>
-        <input aria-label="Search intelligence" placeholder="Search an IOC, CVE, campaign, or report" />
+      <button class="search-shell" type="button" (click)="openCommand()" aria-label="Open command palette">
+        <app-security-icon name="search" />
+        <span>Search workspace navigation</span>
         <kbd>⌘ K</kbd>
+      </button>
+      <div class="topbar-actions">
+        <button class="utility-button theme-toggle" type="button" (click)="theme.toggle()" [attr.aria-label]="theme.isDark() ? 'Use light mode' : 'Use dark mode'" [attr.title]="theme.isDark() ? 'Use light mode' : 'Use dark mode'">
+          <app-security-icon [name]="theme.isDark() ? 'sun' : 'moon'" />
+        </button>
+        <a class="utility-button" routerLink="/monitoring" aria-label="Monitoring changes" title="Monitoring changes"><app-security-icon name="bell" /></a>
+        <a class="avatar" routerLink="/settings" aria-label="Account settings">{{ auth.user()?.display_name?.slice(0, 2)?.toUpperCase() || 'TL' }}</a>
       </div>
-      <div class="topbar-actions"><button class="icon-button" aria-label="Notifications">◌</button><a class="avatar" routerLink="/settings" aria-label="Account settings">{{ auth.user()?.display_name?.slice(0, 2)?.toUpperCase() || 'IN' }}</a></div>
     </header>
     <div class="content"><router-outlet /></div>
   </main>
 </div>
+
+@if (commandOpen()) {
+  <div class="command-backdrop" (click)="closeCommand()">
+    <section class="command-palette" role="dialog" aria-modal="true" aria-label="Workspace command palette" (click)="$event.stopPropagation()">
+      <header><app-security-icon name="search" /><input #commandInput aria-label="Search workspace commands" placeholder="Where do you want to go?" [value]="query()" (input)="updateQuery($event)" (keydown)="handleCommandKeydown($event)" /><kbd>ESC</kbd></header>
+      <div class="command-label">Navigate</div>
+      <div class="command-results">
+        @for (item of filteredNavigation(); track item.path) {
+          <button type="button" (click)="navigate(item.path)"><app-security-icon [name]="item.icon" /><span><strong>{{ item.label }}</strong><small>{{ item.description }}</small></span><b>↵</b></button>
+        } @empty { <p>No workspace action matches “{{ query() }}”.</p> }
+      </div>
+      <footer><span><kbd>↵</kbd> Open first result</span><span><kbd>ESC</kbd> Close</span><small>Navigation searches local routes only.</small></footer>
+    </section>
+  </div>
+}

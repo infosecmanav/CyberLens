@@ -36,6 +36,12 @@ Each investigation receives the same five ordered phases: planning, collection, 
 
 Connector results become observations before an analyst or engine promotes them to evidence. Findings cite evidence. Assessments store source coverage, corroboration, temporal relevance, and analytical consistency separately instead of compressing them into an unexplained score. Similarity records shared factors and states that overlap does not prove attribution.
 
+## Intelligence interoperability path
+
+The connector contract is the extension boundary for future feed frameworks and TAXII services. A feed adapter must translate external records into the existing entity, provider-record, observation, and evidence lineage rather than bypassing those controls. Imports must preserve the producer, retrieval time, external identifier, confidence or marking when present, raw provenance, and an explicit parse outcome.
+
+GOSINT and OpenTAXII are research references for the interoperability backlog. They are not implemented integrations and are not data sources by themselves. Before compatibility is advertised, the project will verify the current upstream project status, supported protocol versions, licensing, authentication behavior, and representative payloads. The planned delivery slices and acceptance criteria are recorded in the [intelligence interoperability backlog](INTELLIGENCE_INTEROPERABILITY_BACKLOG.md).
+
 ## Operational controls
 
 Detection candidates require existing evidence and documented telemetry, false positives, assumptions, and limits. Cases and playbooks emit audit events. All task and playbook execution is dry-run. High-impact work enters `WAITING_APPROVAL`; only an administrator can resolve its approval record.
