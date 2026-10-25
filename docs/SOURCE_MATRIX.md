@@ -2,11 +2,11 @@
 
 Generated from `backend/app/intelligence/catalog.py`. Inventory means the source is tracked; it does not mean the source is integrated.
 
-Total entries: **105**.
+Total entries: **106**.
 
 | Category | Count |
 | --- | ---: |
-| Cti | 13 |
+| Cti | 14 |
 | Domain Dns | 22 |
 | Infrastructure | 8 |
 | Knowledge | 6 |
@@ -23,6 +23,7 @@ Total entries: **105**.
 | [Feodo Tracker](https://feodotracker.abuse.ch) | Cti | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Local development fixtures](https://localhost.invalid/fixtures) | Cti | Local Fixture | None declared | IMPLEMENTED_AND_TESTED | Unit tested | Demonstration data only |
 | [MalwareBazaar](https://bazaar.abuse.ch) | Cti | To Be Verified | `ABUSECH_AUTH_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [Manual STIX 2.1 bundle import](https://docs.oasis-open.org/cti/stix/v2.1/stix-v2.1.html) | Cti | Manual Stix 2 1 Json | None declared | MANUAL_IMPORT_ONLY | Parser, persistence, authorization, partial-result, and deduplication tested | STIX 2.1 Indicator objects with one supported equality pattern per object |
 | [MISP](https://www.misp-project.org) | Cti | To Be Verified | `MISP_URL`, `MISP_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Pulsedive](https://pulsedive.com) | Cti | To Be Verified | `PULSEDIVE_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [SSLBL](https://sslbl.abuse.ch) | Cti | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |

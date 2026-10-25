@@ -42,6 +42,8 @@ The connector contract is the extension boundary for future feed frameworks and 
 
 GOSINT and OpenTAXII are research references for the interoperability backlog. They are not implemented integrations and are not data sources by themselves. Before compatibility is advertised, the project will verify the current upstream project status, supported protocol versions, licensing, authentication behavior, and representative payloads. The planned delivery slices and acceptance criteria are recorded in the [intelligence interoperability backlog](INTELLIGENCE_INTEROPERABILITY_BACKLOG.md).
 
+Version 1.2 implements the first local interoperability boundary: an authenticated analyst can submit a bounded STIX 2.1 JSON bundle. The importer accepts a documented subset of single-IoC Indicator equality patterns, routes values through canonical normalization, stores the complete STIX object as the provider record, carries producer/marking/confidence metadata into the observation, reports unsupported or invalid objects, and emits an audit event. It performs no network requests and does not claim TAXII compatibility.
+
 ## Operational controls
 
 Detection candidates require existing evidence and documented telemetry, false positives, assumptions, and limits. Cases and playbooks emit audit events. All task and playbook execution is dry-run. High-impact work enters `WAITING_APPROVAL`; only an administrator can resolve its approval record.

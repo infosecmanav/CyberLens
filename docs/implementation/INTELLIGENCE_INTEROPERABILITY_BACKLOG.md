@@ -6,6 +6,12 @@ Date: 2026-10-25
 
 Allow analysts to import, refine, and exchange indicator intelligence through modular adapters while preserving ThreatLens provenance, authorization, deduplication, and evidence boundaries. GOSINT informs the collection-and-processing workflow and OpenTAXII informs trusted automated exchange. Neither is currently an implemented ThreatLens integration.
 
+## Delivery status
+
+Version 1.2 completes the local contract portion of Slice 1 and the first vertical part of Slice 2. It adds authenticated manual STIX 2.1 JSON bundle import for a bounded set of Indicator patterns, sanitized valid and partial fixtures, canonical normalization, raw-object provenance, markings, confidence, audit events, explicit per-object issues, and idempotent persistence. Network TAXII discovery, collection polling, manifests, added-after cursors, and export remain unimplemented.
+
+Upstream verification on 2026-10-25 found that OpenTAXII documents TAXII 1.0 and 1.1 support and describes the project as feature-complete with bug-fix maintenance. It does not establish TAXII 2.x or 2.1 support. Any future TAXII 2.1 client will therefore use a separately verified implementation and compatibility suite.
+
 ## Slice 1 — research and contract fixtures
 
 As a maintainer, I can evaluate an integration against verified upstream behavior before the product advertises support.
@@ -54,7 +60,7 @@ Each slice ships as a reviewable vertical increment with migrations, API schemas
 
 ## Research references supplied for planning
 
-These references are inputs to the backlog and were not independently revalidated during the 1.1 UI iteration.
+These references began as planning inputs. GOSINT and the OpenTAXII repository documentation were revalidated for the 1.2 contract iteration on 2026-10-25; the remaining references retain their earlier planning status.
 
 1. [MISP](https://www.misp-project.org/)
 2. [AlienVault / LevelBlue OTX](https://otx.alienvault.com/)

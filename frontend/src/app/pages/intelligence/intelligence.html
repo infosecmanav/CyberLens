@@ -38,6 +38,58 @@
   <p class="safety-note">ThreatLens calls fixed provider endpoints only. Submitted URL entities are normalized and never fetched directly.</p>
 </section>
 
+<details class="import-panel">
+  <summary>
+    <span class="import-mark">STIX</span>
+    <span><strong>Import a STIX 2.1 bundle</strong><small>Read-only manual ingestion with provenance and deduplication</small></span>
+    <b>Open importer</b>
+  </summary>
+  <div class="import-content">
+    <div class="import-boundary"><strong>Supported contract</strong><span>Indicator objects with one IPv4, IPv6, domain, URL, email, MD5, SHA-1, or SHA-256 equality pattern. Other objects are reported and skipped.</span></div>
+    <form (submit)="submitStixImport($event)">
+      <label class="file-picker">
+        <input type="file" accept="application/json,.json" (change)="selectStixFile($event)" />
+        <span>{{ stixFileName() || 'Choose STIX JSON bundle' }}</span>
+        <small>Maximum 2 MiB · 500 objects</small>
+      </label>
+      <label class="reference-field">
+        <span>Source reference <small>optional</small></span>
+        <input type="url" placeholder="https://partner.example/collection" [value]="stixSourceReference()" (input)="updateStixSourceReference($event)" />
+      </label>
+      <button type="submit" [disabled]="!stixBundle() || importLoading()">{{ importLoading() ? 'Importing…' : 'Import bundle' }}</button>
+    </form>
+
+    @if (importError()) { <div class="import-message error" role="alert">{{ importError() }}</div> }
+    @if (importResult(); as imported) {
+      <div class="import-report">
+        <header><div><span>IMPORT REPORT</span><strong>{{ imported.bundle_id }}</strong></div><b>{{ imported.imported_observations }} new · {{ imported.deduplicated_observations }} reused</b></header>
+        <div class="import-metrics">
+          <span><strong>{{ imported.received_objects }}</strong>Received</span>
+          <span><strong>{{ imported.accepted_objects }}</strong>Accepted</span>
+          <span><strong>{{ imported.rejected_objects }}</strong>Rejected</span>
+          <span><strong>{{ imported.skipped_objects }}</strong>Skipped</span>
+        </div>
+        @if (imported.items.length) {
+          <div class="imported-items">
+            @for (item of imported.items; track item.observation_id) {
+              <button type="button" (click)="value.set(item.normalized_value); entityType.set(item.entity_type)">
+                <span>{{ friendly(item.entity_type) }}</span><strong>{{ item.normalized_value }}</strong><small>{{ item.deduplicated ? 'Existing observation reused' : 'Observation persisted' }}</small>
+              </button>
+            }
+          </div>
+        }
+        @if (imported.issues.length) {
+          <div class="import-issues">
+            @for (issue of imported.issues; track issue.object_index) {
+              <p><span [class.rejected]="issue.disposition === 'REJECTED'">{{ issue.disposition }}</span><strong>Object {{ issue.object_index + 1 }}</strong>{{ issue.message }}</p>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</details>
+
 @if (error()) {
   <div class="error-banner" role="alert">{{ error() }}</div>
 }

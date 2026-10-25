@@ -43,3 +43,35 @@ export interface EntityListResponse {
   limit: number;
   offset: number;
 }
+
+export interface StixImportIssue {
+  object_index: number;
+  external_id: string | null;
+  disposition: 'REJECTED' | 'SKIPPED';
+  code: string;
+  message: string;
+}
+
+export interface StixImportedObservation {
+  entity_id: string;
+  observation_id: string;
+  entity_type: string;
+  normalized_value: string;
+  external_id: string;
+  deduplicated: boolean;
+}
+
+export interface StixImportResponse {
+  bundle_id: string;
+  source_id: string;
+  received_objects: number;
+  accepted_objects: number;
+  imported_observations: number;
+  deduplicated_observations: number;
+  created_entities: number;
+  reused_entities: number;
+  rejected_objects: number;
+  skipped_objects: number;
+  items: StixImportedObservation[];
+  issues: StixImportIssue[];
+}

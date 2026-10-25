@@ -7,6 +7,12 @@ from app.api.dependencies import AnalystUser, DatabaseSession
 from app.intelligence.collection import collect_entity
 from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.normalization import NormalizationError, normalize_entity
+from app.intelligence.stix_import import (
+    MAX_STIX_BUNDLE_BYTES,
+    STIX_IMPORT_SOURCE_ID,
+    canonical_bundle_size,
+    import_stix_bundle,
+)
 from app.models import Entity, Observation, Source
 from app.models.enums import EntityType
 from app.schemas.intelligence import (
@@ -18,6 +24,10 @@ from app.schemas.intelligence import (
     NormalizedEntityResponse,
     NormalizeRequest,
     ObservationResponse,
+    StixBundleImportRequest,
+    StixImportedObservation,
+    StixImportIssue,
+    StixImportResponse,
 )
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
@@ -89,6 +99,60 @@ async def lookup(
         entity=EntityResponse.model_validate(entity),
         results=source_results,
         completed_at=job.completed_at,
+    )
+
+
+@router.post("/imports/stix-bundles", response_model=StixImportResponse)
+async def import_stix(
+    payload: StixBundleImportRequest,
+    session: DatabaseSession,
+    user: AnalystUser,
+) -> StixImportResponse:
+    bundle = payload.bundle.model_dump()
+    if canonical_bundle_size(bundle) > MAX_STIX_BUNDLE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="STIX bundle exceeds the 2 MiB import limit",
+        )
+    summary = await import_stix_bundle(
+        session,
+        bundle_id=payload.bundle.id,
+        objects=payload.bundle.objects,
+        source_reference=str(payload.source_reference) if payload.source_reference else None,
+        actor_id=user.id,
+    )
+    return StixImportResponse(
+        bundle_id=summary.bundle_id,
+        source_id=STIX_IMPORT_SOURCE_ID,
+        received_objects=summary.received_objects,
+        accepted_objects=len(summary.items),
+        imported_observations=summary.imported_observations,
+        deduplicated_observations=summary.deduplicated_observations,
+        created_entities=summary.created_entities,
+        reused_entities=summary.reused_entities,
+        rejected_objects=summary.rejected_objects,
+        skipped_objects=summary.skipped_objects,
+        items=[
+            StixImportedObservation(
+                entity_id=item.entity_id,
+                observation_id=item.observation_id,
+                entity_type=item.entity_type,
+                normalized_value=item.normalized_value,
+                external_id=item.external_id,
+                deduplicated=item.deduplicated,
+            )
+            for item in summary.items
+        ],
+        issues=[
+            StixImportIssue(
+                object_index=issue.object_index,
+                external_id=issue.external_id,
+                disposition=issue.disposition,
+                code=issue.code,
+                message=issue.message,
+            )
+            for issue in summary.issues
+        ],
     )
 
 

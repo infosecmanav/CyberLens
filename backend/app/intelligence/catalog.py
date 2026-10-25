@@ -55,6 +55,27 @@ SOURCE_CATALOG: tuple[CatalogSource, ...] = (
         test_state="Unit tested",
         limitation="Demonstration data only",
     ),
+    CatalogSource(
+        source_id="manual-stix-2-1",
+        name="Manual STIX 2.1 bundle import",
+        category=SourceCategory.CTI,
+        official_url="https://docs.oasis-open.org/cti/stix/v2.1/stix-v2.1.html",
+        status=ImplementationStatus.MANUAL_IMPORT_ONLY,
+        api_documentation_url="https://docs.oasis-open.org/cti/stix/v2.1/stix-v2.1.html",
+        access_method="MANUAL_STIX_2_1_JSON",
+        auth_scheme="WORKSPACE_JWT",
+        free_access_status="LOCAL_IMPORT",
+        commercial_usage_status="CONTENT_OWNER_POLICY_APPLIES",
+        terms_and_licensing_notes=(
+            "Analyst-supplied content; the caller remains responsible for its markings and "
+            "sharing restrictions."
+        ),
+        supported_entity_types=("IPV4", "IPV6", "DOMAIN", "URL", "EMAIL", "MD5", "SHA1", "SHA256"),
+        supported_operations=("import",),
+        attribution_requirements="Preserve STIX producer, markings, object ID, and raw object.",
+        test_state="Parser, persistence, authorization, partial-result, and deduplication tested",
+        limitation="STIX 2.1 Indicator objects with one supported equality pattern per object",
+    ),
     _source(
         "virustotal",
         "VirusTotal",

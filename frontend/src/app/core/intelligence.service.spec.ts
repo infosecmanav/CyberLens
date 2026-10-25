@@ -37,4 +37,33 @@ describe('IntelligenceService', () => {
     expect(request.request.method).toBe('GET');
     request.flush([]);
   });
+
+  it('submits a manual STIX bundle through the authenticated intelligence API', () => {
+    const bundle = {
+      type: 'bundle',
+      id: 'bundle--11111111-1111-4111-8111-111111111111',
+      objects: [],
+    };
+    service.importStix({ bundle, source_reference: 'https://example.test/collection' }).subscribe();
+    const request = http.expectOne('/api/v1/intelligence/imports/stix-bundles');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      bundle,
+      source_reference: 'https://example.test/collection',
+    });
+    request.flush({
+      bundle_id: bundle.id,
+      source_id: 'manual-stix-2-1',
+      received_objects: 0,
+      accepted_objects: 0,
+      imported_observations: 0,
+      deduplicated_observations: 0,
+      created_entities: 0,
+      reused_entities: 0,
+      rejected_objects: 0,
+      skipped_objects: 0,
+      items: [],
+      issues: [],
+    });
+  });
 });

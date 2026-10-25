@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 from app.intelligence.connectors.models import ConnectorOutcome
 from app.models.enums import CollectionJobStatus, EntityType
@@ -70,3 +71,48 @@ class LookupResponse(BaseModel):
     entity: EntityResponse
     results: list[LookupSourceResult]
     completed_at: datetime
+
+
+class StixBundlePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["bundle"]
+    id: str = Field(pattern=r"^bundle--[0-9a-fA-F-]{36}$", max_length=80)
+    objects: list[dict[str, Any]] = Field(max_length=500)
+
+
+class StixBundleImportRequest(BaseModel):
+    bundle: StixBundlePayload
+    source_reference: HttpUrl | None = None
+
+
+class StixImportIssue(BaseModel):
+    object_index: int
+    external_id: str | None
+    disposition: Literal["REJECTED", "SKIPPED"]
+    code: str
+    message: str
+
+
+class StixImportedObservation(BaseModel):
+    entity_id: UUID
+    observation_id: UUID
+    entity_type: EntityType
+    normalized_value: str
+    external_id: str
+    deduplicated: bool
+
+
+class StixImportResponse(BaseModel):
+    bundle_id: str
+    source_id: str
+    received_objects: int
+    accepted_objects: int
+    imported_observations: int
+    deduplicated_observations: int
+    created_entities: int
+    reused_entities: int
+    rejected_objects: int
+    skipped_objects: int
+    items: list[StixImportedObservation]
+    issues: list[StixImportIssue]

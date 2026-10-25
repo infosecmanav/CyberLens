@@ -5,6 +5,7 @@ import {
   EntityListResponse,
   IntelligenceObservation,
   LookupResponse,
+  StixImportResponse,
 } from './intelligence.models';
 
 export interface LookupPayload {
@@ -13,12 +14,24 @@ export interface LookupPayload {
   include_demo: boolean;
 }
 
+export interface StixImportPayload {
+  bundle: Record<string, unknown>;
+  source_reference?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class IntelligenceService {
   private readonly http = inject(HttpClient);
 
   lookup(payload: LookupPayload): Observable<LookupResponse> {
     return this.http.post<LookupResponse>('/api/v1/intelligence/lookup', payload);
+  }
+
+  importStix(payload: StixImportPayload): Observable<StixImportResponse> {
+    return this.http.post<StixImportResponse>(
+      '/api/v1/intelligence/imports/stix-bundles',
+      payload,
+    );
   }
 
   observations(entityId: string): Observable<IntelligenceObservation[]> {

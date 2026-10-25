@@ -6,6 +6,7 @@ import {
   IntelligenceEntity,
   IntelligenceObservation,
   LookupResponse,
+  StixImportResponse,
 } from '../../core/intelligence.models';
 import { IntelligenceService } from '../../core/intelligence.service';
 
@@ -16,6 +17,7 @@ import { IntelligenceService } from '../../core/intelligence.service';
   styleUrl: './intelligence.scss',
 })
 export class Intelligence {
+  private readonly maxStixFileBytes = 2 * 1024 * 1024;
   private readonly intelligence = inject(IntelligenceService);
   protected readonly value = signal('');
   protected readonly entityType = signal('AUTO');
@@ -25,6 +27,12 @@ export class Intelligence {
   protected readonly result = signal<LookupResponse | null>(null);
   protected readonly observations = signal<IntelligenceObservation[]>([]);
   protected readonly recent = signal<IntelligenceEntity[]>([]);
+  protected readonly stixBundle = signal<Record<string, unknown> | null>(null);
+  protected readonly stixFileName = signal<string | null>(null);
+  protected readonly stixSourceReference = signal('');
+  protected readonly importLoading = signal(false);
+  protected readonly importError = signal<string | null>(null);
+  protected readonly importResult = signal<StixImportResponse | null>(null);
   protected readonly entityTypes = [
     'AUTO', 'IPV4', 'IPV6', 'DOMAIN', 'URL', 'MD5', 'SHA1', 'SHA256', 'EMAIL',
     'CVE', 'ASN', 'CERTIFICATE', 'NAMESERVER', 'NETWORK_RANGE', 'PRODUCT',
@@ -80,6 +88,57 @@ export class Intelligence {
 
   protected updateDemo(event: Event): void {
     this.includeDemo.set((event.target as HTMLInputElement).checked);
+  }
+
+  protected async selectStixFile(event: Event): Promise<void> {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    this.stixBundle.set(null);
+    this.stixFileName.set(null);
+    this.importResult.set(null);
+    this.importError.set(null);
+    if (!file) return;
+    if (file.size > this.maxStixFileBytes) {
+      this.importError.set('The STIX bundle exceeds the 2 MiB import limit.');
+      return;
+    }
+    try {
+      const parsed: unknown = JSON.parse(await file.text());
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        throw new Error('Bundle root is not an object');
+      }
+      this.stixBundle.set(parsed as Record<string, unknown>);
+      this.stixFileName.set(file.name);
+    } catch {
+      this.importError.set('Choose a valid JSON file containing a STIX 2.1 bundle.');
+    }
+  }
+
+  protected updateStixSourceReference(event: Event): void {
+    this.stixSourceReference.set((event.target as HTMLInputElement).value);
+  }
+
+  protected submitStixImport(event: Event): void {
+    event.preventDefault();
+    const bundle = this.stixBundle();
+    if (!bundle || this.importLoading()) return;
+    const sourceReference = this.stixSourceReference().trim();
+    this.importLoading.set(true);
+    this.importError.set(null);
+    this.importResult.set(null);
+    this.intelligence.importStix({
+      bundle,
+      ...(sourceReference ? { source_reference: sourceReference } : {}),
+    }).subscribe({
+      next: (response) => {
+        this.importResult.set(response);
+        this.importLoading.set(false);
+        this.loadRecent();
+      },
+      error: (response: HttpErrorResponse) => {
+        this.importError.set(this.errorMessage(response));
+        this.importLoading.set(false);
+      },
+    });
   }
 
   protected useRecent(entity: IntelligenceEntity): void {
