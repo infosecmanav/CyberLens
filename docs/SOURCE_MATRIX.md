@@ -18,21 +18,21 @@ Total entries: **107**.
 
 | Source | Category | Access | Credentials | Implementation | Test state | Limitation |
 | --- | --- | --- | --- | --- | --- | --- |
-| [AlienVault / LevelBlue OTX](https://otx.alienvault.com) | Cti | To Be Verified | `OTX_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [AlienVault / LevelBlue OTX](https://otx.alienvault.com) | Cti | Otx Directconnect Api | `OTX_API_KEY` | IMPLEMENTED_AWAITING_KEY | Fixture-tested; bounded live authentication pending user key | Community intelligence quality and upstream duplication require analyst review |
 | [CIRCL](https://www.circl.lu) | Cti | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Configured TAXII 2.1 collections](https://docs.oasis-open.org/cti/taxii/v2.1/taxii-v2.1.html) | Cti | Taxii 2 1 Read Only | None declared | IMPLEMENTED_AND_TESTED | Fixture-tested TAXII 2.1 discovery, collections, manifest, and pagination | Read-only TAXII 2.1; supported STIX Indicator patterns only |
 | [Feodo Tracker](https://feodotracker.abuse.ch) | Cti | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Local development fixtures](https://localhost.invalid/fixtures) | Cti | Local Fixture | None declared | IMPLEMENTED_AND_TESTED | Unit tested | Demonstration data only |
 | [MalwareBazaar](https://bazaar.abuse.ch) | Cti | To Be Verified | `ABUSECH_AUTH_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Manual STIX 2.1 bundle import](https://docs.oasis-open.org/cti/stix/v2.1/stix-v2.1.html) | Cti | Manual Stix 2 1 Json | None declared | MANUAL_IMPORT_ONLY | Parser, persistence, authorization, partial-result, and deduplication tested | STIX 2.1 Indicator objects with one supported equality pattern per object |
-| [MISP](https://www.misp-project.org) | Cti | To Be Verified | `MISP_URL`, `MISP_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [MISP](https://www.misp-project.org) | Cti | Configured Misp Rest Api | `MISP_URL`, `MISP_API_KEY` | IMPLEMENTED_AWAITING_KEY | Fixture-tested; configured server and key pending | HTTPS public host required; server sharing and distribution policy applies |
 | [Pulsedive](https://pulsedive.com) | Cti | To Be Verified | `PULSEDIVE_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [SSLBL](https://sslbl.abuse.ch) | Cti | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [ThreatFox](https://threatfox.abuse.ch) | Cti | To Be Verified | `ABUSECH_AUTH_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [ThreatFox](https://threatfox.abuse.ch) | Cti | Abuse Ch Community Api | `ABUSECH_AUTH_KEY` | IMPLEMENTED_AWAITING_KEY | Fixture-tested; bounded live authentication pending user key | Provider matches are observations and do not establish attribution |
 | [ThreatMiner](https://www.threatminer.org) | Cti | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [ThreatView.io](https://threatview.io) | Cti | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [URLhaus](https://urlhaus.abuse.ch) | Cti | To Be Verified | `ABUSECH_AUTH_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [VirusTotal](https://www.virustotal.com) | Cti | To Be Verified | `VIRUSTOTAL_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [VirusTotal](https://www.virustotal.com) | Cti | Api V3 Lookup | `VIRUSTOTAL_API_KEY` | IMPLEMENTED_AWAITING_KEY | Fixture-tested; bounded live authentication pending user key | Public-tier commercial-use and quota restrictions apply |
 | [AFRINIC](https://www.afrinic.net) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [APNIC](https://www.apnic.net) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [ARIN](https://www.arin.net) | Domain Dns | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
@@ -63,7 +63,7 @@ Total entries: **107**.
 | [ONYPHE](https://www.onyphe.io) | Infrastructure | To Be Verified | `ONYPHE_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Shodan](https://www.shodan.io) | Infrastructure | To Be Verified | `SHODAN_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [ZoomEye](https://www.zoomeye.org) | Infrastructure | To Be Verified | `ZOOMEYE_API_KEY` | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [MITRE ATT&CK Enterprise](https://attack.mitre.org/matrices/enterprise) | Knowledge | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [MITRE ATT&CK Enterprise](https://attack.mitre.org/matrices/enterprise) | Knowledge | Public Stix Bundle | None declared | PUBLIC_FEED_SUPPORTED | Fixture-tested against official STIX bundle shape | Technique context supports mapping; it does not infer observed behavior |
 | [MITRE ATT&CK ICS](https://attack.mitre.org/matrices/ics) | Knowledge | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [MITRE ATT&CK Mobile](https://attack.mitre.org/matrices/mobile) | Knowledge | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [MITRE CAPEC](https://capec.mitre.org) | Knowledge | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
@@ -117,7 +117,7 @@ Total entries: **107**.
 | [GitHub Advisory Database](https://github.com/advisories) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [GitLab Advisory Database](https://advisories.gitlab.com) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [Metasploit module references](https://www.metasploit.com) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
-| [MITRE CVE / CVE.org](https://www.cve.org) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
+| [MITRE CVE / CVE.org](https://www.cve.org) | Vulnerability | Public Cve Services Api | None declared | ADAPTER_SCAFFOLDED | Fixture-tested; bounded live endpoint validation pending | CVE publication does not establish exploitation or maliciousness |
 | [Nuclei templates](https://github.com/projectdiscovery/nuclei-templates) | Vulnerability | To Be Verified | None declared | INVESTIGATION_NEEDED | Not run | Provider documentation and access review required |
 | [NVD](https://nvd.nist.gov) | Vulnerability | Public Api With Optional Key | `NVD_API_KEY` | ADAPTER_SCAFFOLDED | Fixture-tested success, absence, throttling, authorization, and parse errors | Live validation pending network allowlist for services.nvd.nist.gov |
 | [OSV.dev](https://osv.dev) | Vulnerability | Public Api | None declared | ADAPTER_SCAFFOLDED | Fixture tested; live endpoint blocked by current environment policy | Live validation pending network allowlist for api.osv.dev |

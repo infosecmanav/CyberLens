@@ -35,5 +35,8 @@
     <h3>Configuration</h3><p>{{ source.environment_variables.length ? source.environment_variables.join(', ') : 'No credential variable declared.' }}</p>
     <h3>Access and attribution</h3><p>{{ source.terms_and_licensing_notes || 'No additional terms note recorded.' }} {{ source.attribution_requirements || '' }}</p>
     <h3>Verified capabilities</h3><div class="capabilities">@for (capability of source.capabilities; track capability.operation + capability.entity_type) { <span>{{ friendlyStatus(capability.operation) }} · {{ friendlyStatus(capability.entity_type) }}</span> } @empty { <p>No connector capabilities are enabled.</p> }</div>
+    @if (auth.user()?.role === 'ADMIN' && source.supported_operations.includes('lookup')) {
+      <section class="connection-test"><div><span>BOUNDED LIVE CHECK</span><h3>Test connector</h3><p>This explicit request may consume one provider lookup. The result updates source health without persisting intelligence.</p></div><div class="test-controls"><select [value]="testType()" (change)="updateTest('type', $event)">@for (type of source.supported_entity_types; track type) { <option [value]="type">{{ friendlyStatus(type) }}</option> }</select><input [value]="testValue()" (input)="updateTest('value', $event)" placeholder="Canonical indicator" /><button class="primary-button" [disabled]="testing()" (click)="testSource(source)">{{ testing() ? 'Testing…' : 'Run test' }}</button></div>@if (testResult()) { <p class="test-result">{{ testResult() }}</p> }</section>
+    }
   </section>
 }

@@ -12,3 +12,8 @@ export interface SourceDetail extends SourceSummary {
   rate_limit_policy: Record<string, unknown>; caching_policy: Record<string, unknown>;
   attribution_requirements: string | null; capabilities: SourceCapability[];
 }
+export interface SourceHealth {
+  source_id: string; health_status: string; outcome: string | null; message: string | null;
+  required_environment_variables: string[]; configured_environment_variables: string[];
+  last_checked: string | null; last_success: string | null;
+}

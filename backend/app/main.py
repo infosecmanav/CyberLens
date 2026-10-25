@@ -33,10 +33,22 @@ from app.db.session import (
     create_schema,
     get_session_factory,
 )
+from app.intelligence.connectors.cti import (
+    MispConnector,
+    OtxConnector,
+    ThreatFoxConnector,
+    VirusTotalConnector,
+)
+from app.intelligence.connectors.knowledge import MitreAttackConnector
 from app.intelligence.connectors.local_fixture import LocalFixtureConnector
 from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.connectors.registry import ConnectorRegistry
-from app.intelligence.connectors.vulnerability import CisaKevConnector, NvdConnector, OsvConnector
+from app.intelligence.connectors.vulnerability import (
+    CisaKevConnector,
+    CveOrgConnector,
+    NvdConnector,
+    OsvConnector,
+)
 from app.intelligence.enrichment import run_due_enrichment_policies
 from app.intelligence.feeds import run_due_feed_subscriptions
 from app.intelligence.seed import seed_source_catalog
@@ -68,9 +80,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         registry = ConnectorRegistry()
         registry.register(LocalFixtureConnector())
+        registry.register(VirusTotalConnector(http_client))
+        registry.register(OtxConnector(http_client))
+        registry.register(ThreatFoxConnector(http_client))
+        registry.register(MispConnector(http_client))
         registry.register(CisaKevConnector(http_client))
+        registry.register(CveOrgConnector(http_client))
         registry.register(NvdConnector(http_client))
         registry.register(OsvConnector(http_client))
+        registry.register(MitreAttackConnector(http_client))
         manager = ConnectorManager(registry)
         application.state.connector_manager = manager
         taxii_client = TaxiiClient(http_client)
