@@ -30,6 +30,7 @@ export class OperationsService {
   investigation(id: string): Observable<Investigation> { return this.http.get<Investigation>(`/api/v1/investigations/${id}`); }
   createInvestigation(payload: Record<string, unknown>): Observable<Investigation> { return this.http.post<Investigation>('/api/v1/investigations', payload); }
   runInvestigation(id: string): Observable<Investigation> { return this.http.post<Investigation>(`/api/v1/investigations/${id}/run`, {}); }
+  reconcileInvestigation(id: string): Observable<Investigation> { return this.http.post<Investigation>(`/api/v1/investigations/${id}/reconcile`, {}); }
   cancelInvestigation(id: string): Observable<Investigation> { return this.http.post<Investigation>(`/api/v1/investigations/${id}/cancel`, {}); }
   resumeInvestigation(id: string): Observable<Investigation> { return this.http.post<Investigation>(`/api/v1/investigations/${id}/resume`, {}); }
   recordDecision(id: string, verdict: string, rationale: string): Observable<Record<string, unknown>> { return this.http.post<Record<string, unknown>>(`/api/v1/investigations/${id}/decisions`, { verdict, rationale }); }

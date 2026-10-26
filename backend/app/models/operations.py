@@ -158,6 +158,7 @@ class Assessment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Enum(InvestigationVerdict, native_enum=False, length=32), nullable=False
     )
     confidence_dimensions: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    evidence_reconciliation: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     methodology: Mapped[str] = mapped_column(String(80), default="HEURISTIC_V1")
     rationale: Mapped[str] = mapped_column(Text, nullable=False)
     limitations: Mapped[list[str]] = mapped_column(JSON, default=list)

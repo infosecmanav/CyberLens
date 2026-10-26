@@ -19,10 +19,34 @@ export interface Finding {
   uncertainty: string;
 }
 
+export interface SharedUpstreamGroup {
+  reference: string;
+  sources: string[];
+  polarities: string[];
+  evidence_count: number;
+}
+
+export interface EvidenceReconciliation {
+  status: string;
+  independence: string;
+  summary: string;
+  evidence_count: number;
+  provider_count: number;
+  provenance_group_count: number;
+  supporting_evidence: number;
+  conflicting_evidence: number;
+  contextual_evidence: number;
+  supporting_provenance_groups: number;
+  conflicting_provenance_groups: number;
+  shared_upstream_groups: SharedUpstreamGroup[];
+  limitations: string[];
+}
+
 export interface Assessment {
   id: string;
   verdict: string;
   confidence_dimensions: Record<string, unknown>;
+  evidence_reconciliation?: EvidenceReconciliation;
   methodology: string;
   rationale: string;
   limitations: string[];

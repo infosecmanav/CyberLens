@@ -20,7 +20,13 @@ class InvestigationEvidenceConnector(BaseIntelligenceConnector):
         capabilities=[ConnectorCapability(operation="lookup", entity_types={"CVE"})],
     )
 
-    def __init__(self, source_id: str, observation_type: str, summary: str) -> None:
+    def __init__(
+        self,
+        source_id: str,
+        observation_type: str,
+        summary: str,
+        source_reference: str | None = None,
+    ) -> None:
         self.manifest = ConnectorManifest(
             source_id=source_id,
             name=f"{source_id} fixture",
@@ -28,6 +34,7 @@ class InvestigationEvidenceConnector(BaseIntelligenceConnector):
         )
         self._observation_type = observation_type
         self._summary = summary
+        self._source_reference = source_reference
 
     async def lookup(self, request: ConnectorRequest) -> ConnectorResult:
         assert request.entity is not None
@@ -40,7 +47,10 @@ class InvestigationEvidenceConnector(BaseIntelligenceConnector):
                     observation_type=self._observation_type,
                     summary=self._summary,
                     observed_at=datetime(2026, 10, 26, tzinfo=UTC),
-                    source_reference=f"https://{self.manifest.source_id}.example.test/report",
+                    source_reference=(
+                        self._source_reference
+                        or f"https://{self.manifest.source_id}.example.test/report"
+                    ),
                     raw_record={
                         "source": self.manifest.source_id,
                         "classification": self._observation_type,
@@ -89,7 +99,10 @@ def test_investigation_lifecycle_evidence_and_decision_history(
     assert all(step["status"] == "COMPLETED" for step in payload["steps"])
     assert payload["budget_usage"]["cost_usd"] == 0.0
     assert payload["findings"][0]["uncertainty"]
-    assert payload["assessments"][0]["methodology"] == "HEURISTIC_V1_UNCALIBRATED"
+    assert (
+        payload["assessments"][0]["methodology"]
+        == "HEURISTIC_V2_PROVENANCE_AWARE_UNCALIBRATED"
+    )
     assert "threat_actor_attribution" in payload["assessments"][0]["confidence_dimensions"]
 
     evidence = client.get(f"/api/v1/investigations/{created['id']}/evidence")
@@ -235,3 +248,123 @@ def test_complete_investigation_retains_supporting_and_conflicting_evidence(
     assert {item["polarity"] for item in evidence} == {"SUPPORTS", "CONFLICTS"}
     conflicting = next(item for item in evidence if item["polarity"] == "CONFLICTS")
     assert "does not establish that the entity is safe" in conflicting["uncertainty_notes"]
+    reconciliation = run.json()["assessments"][0]["evidence_reconciliation"]
+    assert reconciliation["status"] == "CONFLICTING_EVIDENCE"
+    assert reconciliation["provider_count"] == 2
+    assert reconciliation["provenance_group_count"] == 2
+    assert reconciliation["supporting_evidence"] == 1
+    assert reconciliation["conflicting_evidence"] == 1
+    assert "Conflicting evidence requires an analyst decision." in reconciliation["limitations"]
+
+
+def test_cross_validation_collapses_shared_upstream_provider_reporting(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    shared_reference = "https://upstream.example.test/reports/kev-42/"
+    registry = client.app.state.connector_manager.registry
+    registry._connectors["cisa-kev"] = InvestigationEvidenceConnector(  # noqa: SLF001
+        "cisa-kev",
+        "KNOWN_EXPLOITED_VULNERABILITY",
+        "The upstream report records known exploitation.",
+        shared_reference,
+    )
+    registry._connectors["shodan"] = InvestigationEvidenceConnector(  # noqa: SLF001
+        "shodan",
+        "KNOWN_EXPLOITED_VULNERABILITY",
+        "A second provider republishes the upstream report.",
+        shared_reference.rstrip("/"),
+    )
+    created = client.post(
+        "/api/v1/investigations",
+        headers=auth_headers,
+        json={
+            "title": "Shared upstream review",
+            "objective": "Do not double count provider repetition.",
+            "workflow_type": "CVE_INVESTIGATION",
+            "seed_value": "CVE-2021-44228",
+            "source_ids": ["cisa-kev", "shodan"],
+        },
+    ).json()
+    premature = client.post(
+        f"/api/v1/investigations/{created['id']}/reconcile", headers=auth_headers
+    )
+    assert premature.status_code == 409
+    assert premature.json()["detail"] == (
+        "Evidence reconciliation requires a completed investigation"
+    )
+    run = client.post(
+        f"/api/v1/investigations/{created['id']}/run", headers=auth_headers
+    )
+
+    assert run.status_code == 200
+    reconciliation = run.json()["assessments"][0]["evidence_reconciliation"]
+    assert reconciliation["status"] == "SHARED_UPSTREAM_REPORTING"
+    assert reconciliation["provider_count"] == 2
+    assert reconciliation["provenance_group_count"] == 1
+    assert reconciliation["supporting_provenance_groups"] == 1
+    assert reconciliation["shared_upstream_groups"] == [
+        {
+            "reference": shared_reference.rstrip("/"),
+            "sources": ["cisa-kev", "shodan"],
+            "polarities": ["SUPPORTS"],
+            "evidence_count": 2,
+        }
+    ]
+    assert (
+        run.json()["assessments"][0]["confidence_dimensions"]["independent_sources"][
+            "level"
+        ]
+        == "1"
+    )
+    assert "shared upstream reporting" in run.json()["findings"][0]["uncertainty"]
+    refreshed = client.post(
+        f"/api/v1/investigations/{created['id']}/reconcile", headers=auth_headers
+    )
+    assert refreshed.status_code == 200
+    assert refreshed.json()["assessments"][0]["id"] == run.json()["assessments"][0]["id"]
+    assert (
+        refreshed.json()["assessments"][0]["evidence_reconciliation"]["status"]
+        == "SHARED_UPSTREAM_REPORTING"
+    )
+    assert any(
+        event["event_type"] == "EVIDENCE_RECONCILED"
+        for event in refreshed.json()["events"]
+    )
+
+
+def test_cross_validation_recognizes_independent_supporting_provenance(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    registry = client.app.state.connector_manager.registry
+    registry._connectors["cisa-kev"] = InvestigationEvidenceConnector(  # noqa: SLF001
+        "cisa-kev",
+        "KNOWN_EXPLOITED_VULNERABILITY",
+        "CISA records known exploitation.",
+    )
+    registry._connectors["shodan"] = InvestigationEvidenceConnector(  # noqa: SLF001
+        "shodan",
+        "KNOWN_EXPLOITED_VULNERABILITY",
+        "An independent source records exploitation.",
+    )
+    created = client.post(
+        "/api/v1/investigations",
+        headers=auth_headers,
+        json={
+            "title": "Independent evidence review",
+            "objective": "Reconcile independent supporting records.",
+            "workflow_type": "CVE_INVESTIGATION",
+            "seed_value": "CVE-2021-44228",
+            "source_ids": ["cisa-kev", "shodan"],
+        },
+    ).json()
+    run = client.post(
+        f"/api/v1/investigations/{created['id']}/run", headers=auth_headers
+    )
+
+    assert run.status_code == 200
+    reconciliation = run.json()["assessments"][0]["evidence_reconciliation"]
+    assert reconciliation["status"] == "INDEPENDENT_CORROBORATION"
+    assert reconciliation["provider_count"] == 2
+    assert reconciliation["provenance_group_count"] == 2
+    assert reconciliation["supporting_provenance_groups"] == 2
+    assert "probability" not in reconciliation

@@ -9,6 +9,7 @@ from app.intelligence.collection import collect_entity, get_or_create_entity
 from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.connectors.models import ConnectorOutcome
 from app.intelligence.normalization import normalize_entity
+from app.investigations.cross_validation import EvidenceSignal, reconcile_evidence
 from app.models import (
     Assessment,
     AssessmentEvidence,
@@ -22,6 +23,7 @@ from app.models import (
     InvestigationEvent,
     InvestigationStep,
     Observation,
+    Source,
 )
 from app.models.enums import (
     EntityType,
@@ -211,7 +213,16 @@ async def _correlate(session: AsyncSession, investigation: Investigation) -> dic
     return {"relationships_created": created}
 
 
-def _dimensions(has_kev: bool, source_count: int) -> dict[str, dict[str, str]]:
+def _summary_count(summary: dict[str, object], key: str) -> int:
+    value = summary.get(key)
+    return value if isinstance(value, int) else 0
+
+
+def _dimensions(
+    has_kev: bool, reconciliation: dict[str, object]
+) -> dict[str, dict[str, str]]:
+    provider_count = _summary_count(reconciliation, "provider_count")
+    provenance_groups = _summary_count(reconciliation, "provenance_group_count")
     return {
         "maliciousness": {
             "level": "NOT_ASSESSED",
@@ -246,8 +257,11 @@ def _dimensions(has_kev: bool, source_count: int) -> dict[str, dict[str, str]]:
             ),
         },
         "independent_sources": {
-            "level": str(source_count),
-            "rationale": "Count of distinct direct providers represented in observations.",
+            "level": str(provenance_groups),
+            "rationale": (
+                f"{provider_count} direct provider(s) resolve to {provenance_groups} distinct "
+                "provenance group(s); shared upstream reporting is counted once."
+            ),
         },
     }
 
@@ -262,39 +276,67 @@ async def _assess(session: AsyncSession, investigation: Investigation) -> dict[s
         observation.observation_type == "KNOWN_EXPLOITED_VULNERABILITY"
         for observation in observations
     )
-    source_count = len({observation.source_id for observation in observations})
+    evidence_rows = (
+        await session.execute(
+            select(Evidence, Observation, Source.source_id)
+            .join(Observation, Observation.id == Evidence.observation_id)
+            .join(Source, Source.id == Observation.source_id)
+            .where(Observation.entity_id == investigation.seed_entity_id)
+        )
+    ).all() if investigation.seed_entity_id is not None else []
+    evidence = [item for item, _observation, _source_id in evidence_rows]
+    reconciliation = reconcile_evidence(
+        [
+            EvidenceSignal(
+                evidence_id=str(item.id),
+                observation_id=str(observation.id),
+                source_id=source_id,
+                polarity=item.polarity,
+                source_reference=observation.source_reference,
+                upstream_provenance=observation.upstream_provenance,
+                source_record_id=(
+                    str(observation.source_record_id)
+                    if observation.source_record_id is not None
+                    else None
+                ),
+            )
+            for item, observation, source_id in evidence_rows
+        ]
+    )
     verdict = InvestigationVerdict.SUSPICIOUS if has_kev else InvestigationVerdict.UNKNOWN
-    dimensions = _dimensions(has_kev, source_count)
+    dimensions = _dimensions(has_kev, reconciliation)
     assessment = await session.scalar(
         select(Assessment).where(Assessment.investigation_id == investigation.id)
     )
-    rationale = (
+    base_rationale = (
         "Known exploitation is documented; asset exposure and local telemetry still require review."
         if has_kev
         else "Available evidence does not support a stronger conclusion."
+    )
+    reconciliation_status = str(reconciliation["status"])
+    rationale = f"{base_rationale} {reconciliation['summary']}"
+    raw_reconciliation_limitations = reconciliation.get("limitations")
+    reconciliation_limitations = (
+        [str(item) for item in raw_reconciliation_limitations]
+        if isinstance(raw_reconciliation_limitations, list)
+        else []
     )
     if assessment is None:
         assessment = Assessment(
             investigation_id=investigation.id,
             entity_id=investigation.seed_entity_id,
             assessment_type="THREAT_ASSESSMENT",
-            verdict=verdict,
-            confidence_dimensions=dimensions,
-            methodology="HEURISTIC_V1_UNCALIBRATED",
-            rationale=rationale,
-            limitations=list(investigation.limitations),
         )
         session.add(assessment)
-        await session.flush()
-    evidence = list(
-        (
-            await session.scalars(
-                select(Evidence)
-                .join(Observation, Observation.id == Evidence.observation_id)
-                .where(Observation.entity_id == investigation.seed_entity_id)
-            )
-        ).all()
-    ) if investigation.seed_entity_id is not None else []
+    assessment.verdict = verdict
+    assessment.confidence_dimensions = dimensions
+    assessment.evidence_reconciliation = reconciliation
+    assessment.methodology = "HEURISTIC_V2_PROVENANCE_AWARE_UNCALIBRATED"
+    assessment.rationale = rationale
+    assessment.limitations = sorted(
+        set([*investigation.limitations, *reconciliation_limitations])
+    )
+    await session.flush()
     for item in evidence:
         existing = await session.scalar(
             select(AssessmentEvidence).where(
@@ -316,18 +358,31 @@ async def _assess(session: AsyncSession, investigation: Investigation) -> dict[s
     if finding is None:
         finding = Finding(
             investigation_id=investigation.id,
-            title=("Known exploitation evidence" if has_kev else "Collection limitations recorded"),
-            statement=rationale,
-            severity="HIGH" if has_kev else "INFO",
-            confidence_dimensions=dimensions,
-            uncertainty=(
-                "Known exploitation does not prove compromise of any particular environment."
-                if has_kev
-                else "No-result and unavailable sources cannot be interpreted as benign evidence."
-            ),
         )
         session.add(finding)
-        await session.flush()
+    finding.title = (
+        "Known exploitation evidence" if has_kev else "Collection limitations recorded"
+    )
+    finding.statement = rationale
+    finding.severity = "HIGH" if has_kev else "INFO"
+    finding.confidence_dimensions = dimensions
+    if reconciliation_status == "CONFLICTING_EVIDENCE":
+        finding.uncertainty = (
+            "Source-backed conflict remains unresolved; no automatic benign or malicious "
+            "conclusion is made."
+        )
+    elif reconciliation_status == "SHARED_UPSTREAM_REPORTING":
+        finding.uncertainty = (
+            "Multiple provider records trace to shared upstream reporting and count as one "
+            "provenance group."
+        )
+    else:
+        finding.uncertainty = (
+            "Known exploitation does not prove compromise of any particular environment."
+            if has_kev
+            else "No-result and unavailable sources cannot be interpreted as benign evidence."
+        )
+    await session.flush()
     for item in evidence:
         linked = await session.scalar(
             select(FindingEvidence).where(
@@ -349,6 +404,8 @@ async def _assess(session: AsyncSession, investigation: Investigation) -> dict[s
         "assessment_id": str(assessment.id),
         "finding_id": str(finding.id),
         "verdict": verdict.value,
+        "cross_validation_status": reconciliation_status,
+        "provenance_groups": _summary_count(reconciliation, "provenance_group_count"),
     }
 
 
@@ -376,6 +433,26 @@ async def _detection_readiness(
             "Any generated detection remains unvalidated until validation evidence is recorded."
         ),
     }
+
+
+async def reconcile_investigation_evidence(
+    session: AsyncSession, investigation: Investigation
+) -> dict[str, Any]:
+    validation = await _validate(session, investigation)
+    assessment = await _assess(session, investigation)
+    details = {
+        **assessment,
+        "evidence_created": validation.get("evidence_created", 0),
+    }
+    _event(
+        session,
+        investigation,
+        "EVIDENCE_RECONCILED",
+        "Evidence was reconciled across provider and upstream provenance groups.",
+        details,
+    )
+    await session.commit()
+    return details
 
 
 class BudgetExhausted(RuntimeError):

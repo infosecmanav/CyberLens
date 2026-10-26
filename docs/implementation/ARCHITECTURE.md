@@ -34,7 +34,7 @@ FastAPI owns provider credentials, normalization, authorization, collection poli
 
 Each investigation receives the same five ordered phases: planning, collection, enrichment, correlation, and assessment. Objective text is stored as untrusted analyst context; it cannot add tools or alter the planner. Runtime, request, entity, graph, pivot, report, and cost budgets are persisted with usage. A failed or exhausted step enters an explicit error or analyst-waiting state and can resume without repeating completed work.
 
-Connector results become observations before an analyst or engine promotes them to evidence. Findings cite evidence. Assessments store source coverage, corroboration, temporal relevance, and analytical consistency separately instead of compressing them into an unexplained score. Similarity records shared factors and states that overlap does not prove attribution.
+Connector results become observations before an analyst or engine promotes them to evidence. Findings cite evidence. Assessments store source coverage, provenance-aware corroboration, temporal relevance, and analytical consistency separately instead of compressing them into an unexplained score. Cross-validation normalizes upstream references, collapses provider repetition into one provenance group, retains conflicting polarity, and records its limitations as a persisted snapshot. Similarity records shared factors and states that overlap does not prove attribution.
 
 ## Intelligence interoperability path
 

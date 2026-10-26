@@ -10,7 +10,11 @@ from app.correlation import build_investigation_graph, calculate_similarity
 from app.intelligence.collection import get_or_create_entity
 from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.normalization import NormalizationError, normalize_entity
-from app.investigations import plan_investigation, run_investigation
+from app.investigations import (
+    plan_investigation,
+    reconcile_investigation_evidence,
+    run_investigation,
+)
 from app.models import (
     AnalystDecision,
     Assessment,
@@ -237,6 +241,37 @@ async def run(
         object_type="Investigation",
         object_id=investigation.id,
         details={"status": investigation.status.value},
+    )
+    await session.commit()
+    return await _detail(session, investigation)
+
+
+@router.post("/{investigation_id}/reconcile", response_model=InvestigationDetail)
+async def reconcile(
+    investigation_id: UUID, session: DatabaseSession, user: AnalystUser
+) -> InvestigationDetail:
+    investigation = await _load(session, investigation_id)
+    if investigation.status != InvestigationStatus.COMPLETED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Evidence reconciliation requires a completed investigation",
+        )
+    if investigation.seed_entity_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Evidence reconciliation requires a seed entity",
+        )
+    result = await reconcile_investigation_evidence(session, investigation)
+    emit_audit(
+        session,
+        actor_id=user.id,
+        action="EVIDENCE_RECONCILED",
+        object_type="Investigation",
+        object_id=investigation.id,
+        details={
+            "status": result["cross_validation_status"],
+            "provenance_groups": result["provenance_groups"],
+        },
     )
     await session.commit()
     return await _detail(session, investigation)

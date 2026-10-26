@@ -1,9 +1,14 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
-import { Evidence, Investigation, Similarity } from '../../core/operations.models';
+import {
+  Evidence,
+  EvidenceReconciliation,
+  Investigation,
+  Similarity,
+} from '../../core/operations.models';
 import { OperationsService } from '../../core/operations.service';
 
 @Component({ selector: 'app-investigations', imports: [DatePipe, RouterLink], templateUrl: './investigations.html', styleUrl: './investigations.scss' })
@@ -24,6 +29,10 @@ export class Investigations {
   protected readonly activeTab = signal('overview');
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly reconciliation = computed<EvidenceReconciliation | null>(() => {
+    const value = this.selected()?.assessments?.[0]?.evidence_reconciliation;
+    return value?.status ? value : null;
+  });
   protected readonly tabs = ['overview', 'findings', 'evidence', 'timeline', 'ATT&CK', 'similar', 'detections', 'actions'];
   protected readonly workflows = ['IOC_INVESTIGATION', 'IP_DOMAIN_INVESTIGATION', 'PHISHING_URL_INVESTIGATION', 'MALWARE_HASH_INVESTIGATION', 'CVE_INVESTIGATION', 'ALERT_INVESTIGATION', 'CAMPAIGN_INVESTIGATION', 'INDUSTRY_TIMEFRAME_INVESTIGATION'];
 
@@ -75,6 +84,19 @@ export class Investigations {
     this.loading.set(true);
     this.operations.runInvestigation(item.id).subscribe({
       next: (detail) => { this.loading.set(false); this.selected.set(detail); this.loadEvidence(detail.id); this.reload(); },
+      error: (response: HttpErrorResponse) => this.failed(response),
+    });
+  }
+
+  protected reconcile(): void {
+    const item = this.selected(); if (!item) return;
+    this.loading.set(true); this.error.set(null);
+    this.operations.reconcileInvestigation(item.id).subscribe({
+      next: (detail) => {
+        this.loading.set(false);
+        this.selected.set(detail);
+        this.loadEvidence(detail.id);
+      },
       error: (response: HttpErrorResponse) => this.failed(response),
     });
   }

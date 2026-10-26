@@ -98,6 +98,7 @@ class AssessmentResponse(BaseModel):
     assessment_type: str
     verdict: InvestigationVerdict
     confidence_dimensions: dict[str, object]
+    evidence_reconciliation: dict[str, object]
     methodology: str
     rationale: str
     limitations: list[str]

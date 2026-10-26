@@ -1,5 +1,33 @@
 from fastapi.testclient import TestClient
 
+from app.intelligence.connectors.base import BaseIntelligenceConnector
+from app.intelligence.connectors.models import (
+    ConnectorCapability,
+    ConnectorManifest,
+    ConnectorOutcome,
+    ConnectorRequest,
+    ConnectorResult,
+)
+
+
+class OfflineDomainConnector(BaseIntelligenceConnector):
+    manifest = ConnectorManifest(
+        source_id="offline-domain-fixture",
+        name="Offline domain fixture",
+        capabilities=[ConnectorCapability(operation="lookup", entity_types={"DOMAIN"})],
+    )
+
+    def __init__(self, source_id: str) -> None:
+        self.manifest = self.manifest.model_copy(update={"source_id": source_id})
+
+    async def lookup(self, request: ConnectorRequest) -> ConnectorResult:
+        del request
+        return ConnectorResult(
+            source_id=self.manifest.source_id,
+            outcome=ConnectorOutcome.NO_RESULT,
+            message="Hermetic monitoring fixture",
+        )
+
 
 def lookup_demo_entity(
     client: TestClient, headers: dict[str, str], value: str = "example.test"
@@ -168,6 +196,9 @@ def test_case_approval_playbook_and_dry_run_controls(
 def test_monitoring_baseline_duplicate_and_material_change(
     client: TestClient, auth_headers: dict[str, str]
 ) -> None:
+    registry = client.app.state.connector_manager.registry
+    for source_id in ("crt-sh", "rdap"):
+        registry._connectors[source_id] = OfflineDomainConnector(source_id)  # noqa: SLF001
     seed = lookup_demo_entity(client, auth_headers)["entity"]
     target = lookup_demo_entity(client, auth_headers, "target.test")["entity"]
     objective = client.post(
