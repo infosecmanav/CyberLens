@@ -15,6 +15,7 @@ export class FeedAdmin {
   protected readonly subscriptions = signal<FeedSubscription[]>([]);
   protected readonly runs = signal<FeedRun[]>([]);
   protected readonly name = signal('Official CISA KEV');
+  protected readonly sourceId = signal('cisa-kev');
   protected readonly cadence = signal(60);
   protected readonly maxRecords = signal(1000);
   protected readonly busy = signal<string | null>(null);
@@ -29,6 +30,17 @@ export class FeedAdmin {
     this.name.set((event.target as HTMLInputElement).value);
   }
 
+  protected updateSource(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.sourceId.set(value);
+    const names: Record<string, string> = {
+      'cisa-kev': 'Official CISA KEV',
+      'feodo-tracker': 'Official Feodo Tracker',
+      openphish: 'OpenPhish Community Feed',
+    };
+    this.name.set(names[value] ?? 'Intelligence feed');
+  }
+
   protected updateNumber(field: 'cadence' | 'maxRecords', event: Event): void {
     const value = Number((event.target as HTMLInputElement).value);
     if (field === 'cadence') this.cadence.set(value);
@@ -40,7 +52,7 @@ export class FeedAdmin {
     this.begin('create');
     this.feeds.create({
       name: this.name(),
-      source_id: 'cisa-kev',
+      source_id: this.sourceId(),
       cadence_minutes: this.cadence(),
       max_records: this.maxRecords(),
     }).subscribe({

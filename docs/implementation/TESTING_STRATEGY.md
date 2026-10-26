@@ -2,7 +2,7 @@
 
 ## Required checks
 
-- Backend pytest runs against an isolated SQLite database and covers health, authentication, RBAC, source inventory, connector routing, NVD and CISA feed fixtures, scheduled-feed authorization and idempotency, normalization, STIX 2.1 import contracts, partial imports, provenance, deduplication, reproducible pre-import filters, explicit evidence promotion, durable batch history, issue and promotion filters, quarantined outcomes, investigation execution, budget exhaustion, resume/idempotency, prompt-injection resistance, graph evidence, detection validation, approvals, dry runs, playbooks, monitoring baselines, duplicate suppression, and audit metrics.
+- Backend pytest runs against an isolated SQLite database and covers health, authentication, RBAC, source inventory, connector routing, primary CTI, infrastructure, reputation, URL, NVD, CISA, Feodo, and OpenPhish fixtures, scheduled-feed authorization and idempotency, normalization, STIX 2.1 import contracts, partial imports, provenance, deduplication, reproducible pre-import filters, explicit evidence promotion, durable batch history, issue and promotion filters, quarantined outcomes, investigation execution, budget exhaustion, resume/idempotency, prompt-injection resistance, graph evidence, detection validation, approvals, dry runs, playbooks, monitoring baselines, duplicate suppression, and audit metrics.
 - Ruff and strict mypy validate every backend source module.
 - Alembic upgrades a real PostgreSQL database and `alembic check` verifies ORM/migration parity.
 - Angular tests use Vitest with jsdom. Shell tests cover route rendering, command-palette keyboard access, and theme changes; service tests cover persisted theme behavior and intelligence requests. The production build checks strict templates, TypeScript, styles, route chunks, and bundle budgets.
@@ -11,6 +11,8 @@
 ## Provider testing
 
 Automated tests do not consume provider quota. Connector tests use sanitized fixtures for success, empty results, malformed data, authentication failures, forbidden requests, rate limits, quota exhaustion, timeouts, and network failures. Live checks are bounded, opt-in, and promote a source only after the current environment verifies its documented endpoint and access terms.
+
+API acceptance tests combine successful and failed connectors. They assert that a missing VirusTotal key or provider quota exhaustion returns a partial collection job while preserving the successful entity and observation. TAXII configuration tests reject insecure schemes, embedded credentials, secret-bearing queries, fragments, localhost/internal names, and non-global literal addresses.
 
 Manual STIX import fixtures are synthetic and exercise valid, partially valid, unsupported, repeated, and malformed bundles. The importer never dereferences indicator values or external references. A repeated object must return the existing observation ID; a changed object must remain separately traceable through its canonical raw-content hash.
 

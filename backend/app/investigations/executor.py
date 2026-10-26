@@ -117,7 +117,11 @@ async def _validate(session: AsyncSession, investigation: Investigation) -> dict
         polarity = (
             EvidencePolarity.SUPPORTS
             if observation.observation_type == "KNOWN_EXPLOITED_VULNERABILITY"
-            else EvidencePolarity.CONTEXTUAL
+            else (
+                EvidencePolarity.CONFLICTS
+                if observation.observation_type == "BENIGN_CLASSIFICATION"
+                else EvidencePolarity.CONTEXTUAL
+            )
         )
         claim = observation.summary
         evidence = await session.scalar(
@@ -134,7 +138,12 @@ async def _validate(session: AsyncSession, investigation: Investigation) -> dict
                 uncertainty_notes=(
                     "Demonstration data cannot support a real-world threat conclusion."
                     if observation.observation_type == "DEMONSTRATION_ONLY"
-                    else "Provider presence is scoped to the provider's published record."
+                    else (
+                        "A provider's benign classification conflicts with threat evidence but "
+                        "does not establish that the entity is safe."
+                        if polarity == EvidencePolarity.CONFLICTS
+                        else "Provider presence is scoped to the provider's published record."
+                    )
                 ),
             )
             session.add(evidence)

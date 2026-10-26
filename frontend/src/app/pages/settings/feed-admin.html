@@ -3,15 +3,13 @@
     <div><span>COLLECTION CONTROL</span><h2>Scheduled intelligence feeds</h2></div>
     <p>Ingest official provider records on a fixed cadence with a hard record budget, canonical deduplication, and a reviewable run ledger.</p>
   </header>
-  @if (!subscriptions().length) {
-    <form class="feed-form" (submit)="create($event)">
+  <form class="feed-form" (submit)="create($event)">
       <label><span>Subscription name</span><input required minlength="2" [value]="name()" (input)="updateName($event)" /></label>
-      <label><span>Provider</span><input value="CISA KEV · official JSON" disabled /></label>
+      <label><span>Provider</span><select [value]="sourceId()" (change)="updateSource($event)"><option value="cisa-kev">CISA KEV · CVE</option><option value="feodo-tracker">Feodo Tracker · IPv4</option><option value="openphish">OpenPhish · URL</option></select></label>
       <label><span>Cadence minutes</span><input type="number" min="10" max="10080" [value]="cadence()" (input)="updateNumber('cadence', $event)" /></label>
       <label><span>Record budget</span><input type="number" min="1" max="5000" [value]="maxRecords()" (input)="updateNumber('maxRecords', $event)" /></label>
       <button class="primary-button" [disabled]="busy() !== null">Enable feed</button>
-    </form>
-  }
+  </form>
   @if (message()) { <div class="workspace-message success">{{ message() }}</div> }
   @if (error()) { <div class="workspace-message error">{{ error() }}</div> }
   <div class="subscription-grid">

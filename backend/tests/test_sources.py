@@ -14,6 +14,10 @@ def test_source_catalog_is_seeded_and_truthful(client: TestClient) -> None:
     assert sources["virustotal"]["implementation_status"] == "IMPLEMENTED_AWAITING_KEY"
     assert sources["virustotal"]["health_status"] == "UNKNOWN"
     assert sources["virustotal"]["environment_variables"] == ["VIRUSTOTAL_API_KEY"]
+    assert sources["google-safe-browsing"]["implementation_status"] == "TERMS_RESTRICTED"
+    safe_browsing = client.get("/api/v1/sources/google-safe-browsing")
+    assert safe_browsing.status_code == 200
+    assert safe_browsing.json()["commercial_usage_status"] == "COMMERCIAL_USE_REQUIRES_WEB_RISK"
 
 
 def test_source_detail_and_missing_source(client: TestClient) -> None:

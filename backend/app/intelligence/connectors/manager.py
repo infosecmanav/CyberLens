@@ -33,7 +33,14 @@ class ConnectorManager:
         request: ConnectorRequest,
         source_ids: set[str] | None = None,
     ) -> list[ConnectorResult]:
-        connectors = self.registry.applicable("fetch_feed", "CVE")
+        connectors = [
+            connector
+            for connector in self.registry.all()
+            if any(
+                capability.operation == "fetch_feed"
+                for capability in connector.manifest.capabilities
+            )
+        ]
         if source_ids is not None:
             connectors = [c for c in connectors if c.manifest.source_id in source_ids]
         return await asyncio.gather(

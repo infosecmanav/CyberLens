@@ -1,14 +1,15 @@
 # ThreatLens
 
-ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. Version 2.1 completes the infrastructure, registration, passive URL, and reputation connector wave while preserving the complete Phase 0–8 operational baseline.
+ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. Version 2.2 completes the planned provider expansion, security hardening, and Phase 0–8 operational baseline.
 
 ## What works
 
 - FastAPI, PostgreSQL, Alembic, JWT authentication, Argon2 password hashing, and analyst/admin roles.
 - A registry of 106 intelligence sources and import methods with explicit implementation and health states.
 - Canonical entity normalization, deduplicated collection, provider records, observations, and evidence.
-- A verified CISA KEV lookup and scheduled-feed connector plus fixture-tested VirusTotal, OTX, ThreatFox, MISP, CVE.org, NVD, OSV, and MITRE ATT&CK adapters.
+- A verified CISA KEV lookup and scheduled-feed connector plus fixture-tested VirusTotal, OTX, ThreatFox, URLhaus, MalwareBazaar, MISP, CVE.org, NVD, OSV, and MITRE ATT&CK adapters.
 - Fixture-tested Shodan, Censys, GreyNoise, AbuseIPDB, RDAP, crt.sh, and passive-only urlscan.io adapters with explicit plan, quota, attribution, and interpretation limits.
+- Bounded Feodo Tracker and OpenPhish subscriptions with cache controls, malformed-record quarantine, canonical deduplication, and durable run ledgers.
 - Deterministic five-step investigation plans with request, runtime, entity, graph, report, and zero-cost budgets.
 - Resumable and idempotent investigation execution, immutable analyst decisions, evidence-backed findings, and separate confidence dimensions.
 - Bounded relationship graphs and contextual similarity with an explicit attribution limitation.
@@ -28,7 +29,7 @@ ThreatLens is an evidence-backed cyber-threat intelligence and investigation pla
 - Administrator-controlled CISA KEV subscriptions with explicit cadence and record budgets, durable per-record outcomes, canonical deduplication, source health, scheduling, and manual collection.
 - Administrator-triggered bounded source tests that update health without persisting test intelligence, expose configured credential names without values, and reject unsupported entity types.
 
-CISA KEV and MITRE ATT&CK are the remote sources currently marked as public-feed supported. Credential-based adapters remain `IMPLEMENTED_AWAITING_KEY` until the owner supplies keys and runs bounded tests. NVD, OSV, and CVE.org remain `ADAPTER_SCAFFOLDED` until their live endpoints are allowed and validated. Other catalogue entries stay conservative until their access and connector behavior are verified. Demonstration evidence is opt-in and remains labelled throughout the system.
+CISA KEV, MITRE ATT&CK, Feodo Tracker, and OpenPhish are marked as public-feed supported. Credential-based adapters remain `IMPLEMENTED_AWAITING_KEY` until the owner supplies keys and runs bounded tests. NVD, OSV, CVE.org, and passive infrastructure adapters remain conservatively scaffolded until bounded live validation. Google Safe Browsing is terms-restricted, and other catalogue entries stay conservative until their access and connector behavior are verified. Demonstration evidence is opt-in and remains labelled throughout the system.
 
 ## Run with Docker Compose
 
@@ -90,4 +91,4 @@ compose.yaml              PostgreSQL and development services
 .env.example              Non-secret configuration and credential checklist
 ```
 
-See the [2.1 infrastructure report](docs/implementation/ITERATION_2_1_INFRASTRUCTURE.md), [2.0 primary-CTI report](docs/implementation/ITERATION_2_0_PRIMARY_CTI.md), [1.9 scheduled-feed report](docs/implementation/ITERATION_1_9_SCHEDULED_FEEDS.md), [1.8 controlled-export report](docs/implementation/ITERATION_1_8_CONTROLLED_EXPORT.md), [1.7 enrichment report](docs/implementation/ITERATION_1_7_ENRICHMENT.md), [1.6 TAXII collection report](docs/implementation/ITERATION_1_6_TAXII_COLLECTION.md), [1.5 evidence-promotion report](docs/implementation/ITERATION_1_5_EVIDENCE_PROMOTION.md), [1.4 filter report](docs/implementation/ITERATION_1_4_IMPORT_FILTERS.md), [1.3 import-ledger report](docs/implementation/ITERATION_1_3_IMPORT_LEDGER.md), [1.2 STIX import report](docs/implementation/ITERATION_1_2_STIX_IMPORT.md), [1.1 UI iteration report](docs/implementation/ITERATION_1_1_SECURITY_CONSOLE.md), [intelligence interoperability backlog](docs/implementation/INTELLIGENCE_INTEROPERABILITY_BACKLOG.md), [Phase 3–8 report](docs/implementation/PHASE_3_8_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), [testing strategy](docs/implementation/TESTING_STRATEGY.md), and [source matrix](docs/SOURCE_MATRIX.md).
+See the [post-Phase-2 plan](docs/implementation/POST_PHASE_2_PLAN.md), [2.2 extended-ecosystem report](docs/implementation/ITERATION_2_2_EXTENDED_ECOSYSTEM.md), [Wave 10 completion report](docs/implementation/WAVE_10_REPORT.md), [2.1 infrastructure report](docs/implementation/ITERATION_2_1_INFRASTRUCTURE.md), [2.0 primary-CTI report](docs/implementation/ITERATION_2_0_PRIMARY_CTI.md), [interoperability backlog](docs/implementation/INTELLIGENCE_INTEROPERABILITY_BACKLOG.md), [Phase 3–8 report](docs/implementation/PHASE_3_8_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), [testing strategy](docs/implementation/TESTING_STRATEGY.md), and [source matrix](docs/SOURCE_MATRIX.md).

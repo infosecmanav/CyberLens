@@ -287,6 +287,11 @@ def test_taxii_configuration_requires_admin_authentication(client: TestClient) -
         "https://user:pass@taxii.example.test/taxii2/",
         "https://taxii.example.test/taxii2/?token=secret",
         "https://taxii.example.test/taxii2/#fragment",
+        "https://localhost/taxii2/",
+        "https://taxii.internal/taxii2/",
+        "https://127.0.0.1/taxii2/",
+        "https://10.0.0.4/taxii2/",
+        "https://[::1]/taxii2/",
     ],
 )
 def test_taxii_configuration_rejects_unsafe_discovery_urls(

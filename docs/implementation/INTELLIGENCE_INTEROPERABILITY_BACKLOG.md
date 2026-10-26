@@ -24,6 +24,12 @@ Version 1.8 completes the controlled sharing portion of Slice 4. Export policies
 
 Version 1.9 completes scheduled non-TAXII feed collection. Administrators can configure one bounded subscription per feed-capable source, control cadence and per-run record budget, pause or run collection, and review durable per-record import, deduplication, and rejection outcomes. CISA KEV supplies the first scheduled feed. A fixture-verified NVD CVE API 2.0 lookup adapter adds provider breadth while retaining a conservative `ADAPTER_SCAFFOLDED` label until bounded live validation is allowed.
 
+Version 2.0 completes the primary CTI adapter increment with fixture-tested VirusTotal, OTX, ThreatFox, MISP, CVE.org, and MITRE ATT&CK lookups. Credentials remain backend-only, missing keys produce visible `NOT_CONFIGURED` outcomes, and active submissions are unavailable.
+
+Version 2.1 completes the passive infrastructure increment with fixture-tested Shodan, Censys, GreyNoise, AbuseIPDB, RDAP, crt.sh, and urlscan lookups. Provider plan and quota boundaries remain explicit, and urlscan submission stays disabled.
+
+Version 2.2 completes the permitted extended-ecosystem increment with URLhaus and MalwareBazaar metadata lookup plus scheduled Feodo Tracker and OpenPhish feeds. TAXII endpoint validation blocks local/internal targets, mixed-success and quota-exhaustion behavior has API-level tests, and Google Safe Browsing is truthfully marked terms-restricted. Sources without a verified permitted path remain visible in the source matrix rather than being represented as integrations.
+
 Upstream verification on 2026-10-25 found that OpenTAXII documents TAXII 1.0 and 1.1 support and describes the project as feature-complete with bug-fix maintenance. It does not establish TAXII 2.x or 2.1 support. Any future TAXII 2.1 client will therefore use a separately verified implementation and compatibility suite.
 
 ## Slice 1 — research and contract fixtures

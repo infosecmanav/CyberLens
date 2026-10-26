@@ -34,9 +34,12 @@ from app.db.session import (
     get_session_factory,
 )
 from app.intelligence.connectors.cti import (
+    FeodoTrackerConnector,
+    MalwareBazaarConnector,
     MispConnector,
     OtxConnector,
     ThreatFoxConnector,
+    UrlhausConnector,
     VirusTotalConnector,
 )
 from app.intelligence.connectors.domain import CrtShConnector, RdapConnector
@@ -50,7 +53,7 @@ from app.intelligence.connectors.local_fixture import LocalFixtureConnector
 from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.connectors.registry import ConnectorRegistry
 from app.intelligence.connectors.reputation import AbuseIpDbConnector
-from app.intelligence.connectors.url import UrlscanConnector
+from app.intelligence.connectors.url import OpenPhishConnector, UrlscanConnector
 from app.intelligence.connectors.vulnerability import (
     CisaKevConnector,
     CveOrgConnector,
@@ -91,6 +94,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         registry.register(VirusTotalConnector(http_client))
         registry.register(OtxConnector(http_client))
         registry.register(ThreatFoxConnector(http_client))
+        registry.register(UrlhausConnector(http_client))
+        registry.register(MalwareBazaarConnector(http_client))
+        registry.register(FeodoTrackerConnector(http_client))
         registry.register(MispConnector(http_client))
         registry.register(CisaKevConnector(http_client))
         registry.register(CveOrgConnector(http_client))
@@ -104,6 +110,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         registry.register(CrtShConnector(http_client))
         registry.register(RdapConnector(http_client))
         registry.register(UrlscanConnector(http_client))
+        registry.register(OpenPhishConnector(http_client))
         manager = ConnectorManager(registry)
         application.state.connector_manager = manager
         taxii_client = TaxiiClient(http_client)

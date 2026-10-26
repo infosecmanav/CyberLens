@@ -1,6 +1,7 @@
 import os
 import re
 from datetime import UTC, datetime
+from ipaddress import ip_address
 from urllib.parse import urlsplit
 from uuid import UUID
 
@@ -28,6 +29,20 @@ def _validate_https_url(value: str) -> str:
         or parsed.query
     ):
         raise ValueError("URL must be an HTTPS endpoint without credentials, query, or fragment")
+    hostname = parsed.hostname.lower()
+    if (
+        hostname == "localhost"
+        or hostname.endswith((".localhost", ".local", ".internal"))
+        or "." not in hostname
+    ):
+        raise ValueError("URL must not target a local or internal host")
+    try:
+        address = ip_address(hostname)
+    except ValueError:
+        pass
+    else:
+        if not address.is_global:
+            raise ValueError("URL must not target a private or reserved address")
     return value.rstrip("/") + "/"
 
 

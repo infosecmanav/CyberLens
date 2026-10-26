@@ -1,6 +1,7 @@
 import httpx
 from fastapi.testclient import TestClient
 
+from app.intelligence.connectors.cti import FeodoTrackerConnector
 from app.intelligence.connectors.vulnerability import CisaKevConnector
 
 
@@ -96,3 +97,46 @@ def test_feed_subscription_rejects_unknown_sources_and_requires_admin(
     )
     assert rejected.status_code == 400
     assert rejected.json()["detail"] == "Source does not expose an automated production feed"
+
+
+def test_feodo_feed_subscription_persists_ipv4_observations(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json=[
+                {
+                    "ip_address": "203.0.113.10",
+                    "port": 443,
+                    "status": "online",
+                    "malware": "Dridex",
+                    "last_online": "2026-10-25",
+                }
+            ],
+            request=request,
+        )
+
+    manager = client.app.state.connector_manager
+    manager.registry._connectors["feodo-tracker"] = FeodoTrackerConnector(  # noqa: SLF001
+        httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    )
+    created = client.post(
+        "/api/v1/feeds/subscriptions",
+        headers=auth_headers,
+        json={
+            "name": "Official Feodo Tracker",
+            "source_id": "feodo-tracker",
+            "cadence_minutes": 60,
+            "max_records": 100,
+        },
+    )
+    assert created.status_code == 201
+    run = client.post(
+        f"/api/v1/feeds/subscriptions/{created.json()['id']}/run",
+        headers=auth_headers,
+    )
+    assert run.status_code == 200
+    assert run.json()["created_entities"] == 1
+    assert run.json()["new_observations"] == 1
+    assert run.json()["items"][0]["external_id"] == "203.0.113.10:443"

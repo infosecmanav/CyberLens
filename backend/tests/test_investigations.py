@@ -1,4 +1,53 @@
+from datetime import UTC, datetime
+
 from fastapi.testclient import TestClient
+
+from app.intelligence.connectors.base import BaseIntelligenceConnector
+from app.intelligence.connectors.models import (
+    ConnectorCapability,
+    ConnectorManifest,
+    ConnectorOutcome,
+    ConnectorRequest,
+    ConnectorResult,
+    NormalizedObservation,
+)
+
+
+class InvestigationEvidenceConnector(BaseIntelligenceConnector):
+    manifest = ConnectorManifest(
+        source_id="evidence-fixture",
+        name="Evidence fixture",
+        capabilities=[ConnectorCapability(operation="lookup", entity_types={"CVE"})],
+    )
+
+    def __init__(self, source_id: str, observation_type: str, summary: str) -> None:
+        self.manifest = ConnectorManifest(
+            source_id=source_id,
+            name=f"{source_id} fixture",
+            capabilities=[ConnectorCapability(operation="lookup", entity_types={"CVE"})],
+        )
+        self._observation_type = observation_type
+        self._summary = summary
+
+    async def lookup(self, request: ConnectorRequest) -> ConnectorResult:
+        assert request.entity is not None
+        return ConnectorResult(
+            source_id=self.manifest.source_id,
+            outcome=ConnectorOutcome.SUCCESS,
+            observations=[
+                NormalizedObservation(
+                    entity=request.entity,
+                    observation_type=self._observation_type,
+                    summary=self._summary,
+                    observed_at=datetime(2026, 10, 26, tzinfo=UTC),
+                    source_reference=f"https://{self.manifest.source_id}.example.test/report",
+                    raw_record={
+                        "source": self.manifest.source_id,
+                        "classification": self._observation_type,
+                    },
+                )
+            ],
+        )
 
 
 def create_investigation(
@@ -146,3 +195,43 @@ def test_untrusted_objective_cannot_change_deterministic_plan(
         "PRIORITIZING",
         "DETECTION_ANALYSIS",
     ]
+
+
+def test_complete_investigation_retains_supporting_and_conflicting_evidence(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    registry = client.app.state.connector_manager.registry
+    registry._connectors["cisa-kev"] = InvestigationEvidenceConnector(  # noqa: SLF001
+        "cisa-kev",
+        "KNOWN_EXPLOITED_VULNERABILITY",
+        "The official exploitation catalogue contains this CVE.",
+    )
+    registry._connectors["shodan"] = InvestigationEvidenceConnector(  # noqa: SLF001
+        "shodan",
+        "BENIGN_CLASSIFICATION",
+        "A second provider classifies the observed context as benign.",
+    )
+    created = client.post(
+        "/api/v1/investigations",
+        headers=auth_headers,
+        json={
+            "title": "Cross-source CVE review",
+            "objective": "Assess corroborating and conflicting provider evidence.",
+            "workflow_type": "CVE_INVESTIGATION",
+            "seed_value": "CVE-2021-44228",
+            "source_ids": ["cisa-kev", "shodan"],
+        },
+    )
+    assert created.status_code == 201
+    run = client.post(
+        f"/api/v1/investigations/{created.json()['id']}/run",
+        headers=auth_headers,
+    )
+    assert run.status_code == 200
+    assert run.json()["status"] == "COMPLETED"
+    evidence = client.get(
+        f"/api/v1/investigations/{created.json()['id']}/evidence"
+    ).json()
+    assert {item["polarity"] for item in evidence} == {"SUPPORTS", "CONFLICTS"}
+    conflicting = next(item for item in evidence if item["polarity"] == "CONFLICTS")
+    assert "does not establish that the entity is safe" in conflicting["uncertainty_notes"]
