@@ -126,6 +126,7 @@ describe('IntelligenceService', () => {
 
     const promotion = {
       polarity: 'CONTEXTUAL' as const,
+      assessment_dimension: 'GENERAL_CONTEXT' as const,
       claim: 'The reviewed indicator is relevant context.',
       uncertainty_notes: 'Provider presence does not establish attribution.',
     };

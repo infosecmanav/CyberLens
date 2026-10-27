@@ -23,7 +23,21 @@ export interface SharedUpstreamGroup {
   reference: string;
   sources: string[];
   polarities: string[];
+  dimensions: string[];
   evidence_count: number;
+}
+
+export interface DimensionReconciliation {
+  dimension: string;
+  status: string;
+  evidence_count: number;
+  provider_count: number;
+  provenance_group_count: number;
+  supporting_evidence: number;
+  conflicting_evidence: number;
+  contextual_evidence: number;
+  supporting_provenance_groups: number;
+  conflicting_provenance_groups: number;
 }
 
 export interface EvidenceReconciliation {
@@ -33,11 +47,13 @@ export interface EvidenceReconciliation {
   evidence_count: number;
   provider_count: number;
   provenance_group_count: number;
+  dimension_count: number;
   supporting_evidence: number;
   conflicting_evidence: number;
   contextual_evidence: number;
   supporting_provenance_groups: number;
   conflicting_provenance_groups: number;
+  dimension_summaries: DimensionReconciliation[];
   shared_upstream_groups: SharedUpstreamGroup[];
   limitations: string[];
 }
@@ -78,6 +94,7 @@ export interface Evidence {
   id: string;
   source_id: string;
   polarity: string;
+  assessment_dimension: string;
   claim: string;
   uncertainty_notes: string | null;
   observed_at: string;

@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "ThreatLens"
-    app_version: str = "2.3.0"
+    app_version: str = "2.4.0"
     app_env: Literal["development", "test", "production"] = "development"
     app_secret_key: str = "development-only-change-me"
     api_v1_prefix: str = "/api/v1"

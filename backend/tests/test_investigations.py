@@ -101,7 +101,7 @@ def test_investigation_lifecycle_evidence_and_decision_history(
     assert payload["findings"][0]["uncertainty"]
     assert (
         payload["assessments"][0]["methodology"]
-        == "HEURISTIC_V2_PROVENANCE_AWARE_UNCALIBRATED"
+        == "HEURISTIC_V3_DIMENSION_ALIGNED_UNCALIBRATED"
     )
     assert "threat_actor_attribution" in payload["assessments"][0]["confidence_dimensions"]
 
@@ -254,7 +254,24 @@ def test_complete_investigation_retains_supporting_and_conflicting_evidence(
     assert reconciliation["provenance_group_count"] == 2
     assert reconciliation["supporting_evidence"] == 1
     assert reconciliation["conflicting_evidence"] == 1
-    assert "Conflicting evidence requires an analyst decision." in reconciliation["limitations"]
+    assert (
+        "Same-dimension conflicting evidence requires an analyst decision."
+        in reconciliation["limitations"]
+    )
+    assert reconciliation["dimension_summaries"] == [
+        {
+            "dimension": "MALICIOUSNESS",
+            "status": "CONFLICTING_EVIDENCE",
+            "evidence_count": 2,
+            "provider_count": 2,
+            "provenance_group_count": 2,
+            "supporting_evidence": 1,
+            "conflicting_evidence": 1,
+            "contextual_evidence": 0,
+            "supporting_provenance_groups": 1,
+            "conflicting_provenance_groups": 1,
+        }
+    ]
 
 
 def test_cross_validation_collapses_shared_upstream_provider_reporting(
@@ -307,6 +324,7 @@ def test_cross_validation_collapses_shared_upstream_provider_reporting(
             "reference": shared_reference.rstrip("/"),
             "sources": ["cisa-kev", "shodan"],
             "polarities": ["SUPPORTS"],
+            "dimensions": ["MALICIOUSNESS"],
             "evidence_count": 2,
         }
     ]

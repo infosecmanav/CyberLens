@@ -308,6 +308,7 @@ def test_analyst_promotes_an_accepted_outcome_to_audited_evidence(
     )
     payload = {
         "polarity": "CONTEXTUAL",
+        "assessment_dimension": "INFRASTRUCTURE_ASSOCIATION",
         "claim": "The reviewed STIX indicator is relevant investigation context.",
         "uncertainty_notes": (
             "Provider presence does not establish attribution or current activity."
@@ -322,6 +323,7 @@ def test_analyst_promotes_an_accepted_outcome_to_audited_evidence(
     evidence = promoted.json()
     assert evidence["observation_id"] == accepted["observation_id"]
     assert evidence["polarity"] == "CONTEXTUAL"
+    assert evidence["assessment_dimension"] == "INFRASTRUCTURE_ASSOCIATION"
     assert evidence["claim"] == payload["claim"]
     assert evidence["promoted_by"]
     assert evidence["analyst_reviewed_at"]
@@ -389,6 +391,10 @@ def test_analyst_promotes_an_accepted_outcome_to_audited_evidence(
         if item["action"] == "intelligence.import_object_promoted"
     )
     assert promotion_audit["details"]["object_outcome_id"] == accepted["id"]
+    assert (
+        promotion_audit["details"]["assessment_dimension"]
+        == "INFRASTRUCTURE_ASSOCIATION"
+    )
 
 
 def test_import_history_filters_and_quarantines_object_outcomes(

@@ -1,6 +1,6 @@
 # ThreatLens
 
-ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. Version 2.3 adds provenance-aware evidence cross-validation to the complete provider and Phase 0–8 operational baseline.
+ThreatLens is an evidence-backed cyber-threat intelligence and investigation platform. Version 2.4 aligns provenance-aware cross-validation by analytical dimension across the complete provider and Phase 0–8 operational baseline.
 
 ## What works
 
@@ -13,6 +13,7 @@ ThreatLens is an evidence-backed cyber-threat intelligence and investigation pla
 - Deterministic five-step investigation plans with request, runtime, entity, graph, report, and zero-cost budgets.
 - Resumable and idempotent investigation execution, immutable analyst decisions, evidence-backed findings, and separate confidence dimensions.
 - Provenance-aware evidence reconciliation that separates independent corroboration, shared upstream reporting, contextual observations, and conflicts without inventing probability scores.
+- Claim-aligned reconciliation that prevents evidence in unrelated analytical dimensions from being counted as corroboration or contradiction.
 - Bounded relationship graphs and contextual similarity with an explicit attribution limitation.
 - Evidence-gated Sigma, SPL, and KQL candidates with test and production validation states.
 - Cases, tasks, immutable audit events, nine seeded playbooks, approval gates, and dry-run-only response execution.
@@ -92,4 +93,4 @@ compose.yaml              PostgreSQL and development services
 .env.example              Non-secret configuration and credential checklist
 ```
 
-See the [2.3 cross-validation report](docs/implementation/ITERATION_2_3_CROSS_VALIDATION.md), [post-Phase-2 plan](docs/implementation/POST_PHASE_2_PLAN.md), [2.2 extended-ecosystem report](docs/implementation/ITERATION_2_2_EXTENDED_ECOSYSTEM.md), [Wave 10 completion report](docs/implementation/WAVE_10_REPORT.md), [interoperability backlog](docs/implementation/INTELLIGENCE_INTEROPERABILITY_BACKLOG.md), [Phase 3–8 report](docs/implementation/PHASE_3_8_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), [testing strategy](docs/implementation/TESTING_STRATEGY.md), and [source matrix](docs/SOURCE_MATRIX.md).
+See the [2.4 dimension-alignment report](docs/implementation/ITERATION_2_4_DIMENSION_ALIGNMENT.md), [2.3 cross-validation report](docs/implementation/ITERATION_2_3_CROSS_VALIDATION.md), [post-Phase-2 plan](docs/implementation/POST_PHASE_2_PLAN.md), [2.2 extended-ecosystem report](docs/implementation/ITERATION_2_2_EXTENDED_ECOSYSTEM.md), [Wave 10 completion report](docs/implementation/WAVE_10_REPORT.md), [interoperability backlog](docs/implementation/INTELLIGENCE_INTEROPERABILITY_BACKLOG.md), [Phase 3–8 report](docs/implementation/PHASE_3_8_REPORT.md), [architecture](docs/implementation/ARCHITECTURE.md), [data model](docs/implementation/DATA_MODEL.md), [testing strategy](docs/implementation/TESTING_STRATEGY.md), and [source matrix](docs/SOURCE_MATRIX.md).

@@ -6,7 +6,12 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 
 from app.intelligence.connectors.models import ConnectorOutcome
-from app.models.enums import CollectionJobStatus, EntityType, EvidencePolarity
+from app.models.enums import (
+    CollectionJobStatus,
+    EntityType,
+    EvidenceDimension,
+    EvidencePolarity,
+)
 
 
 class NormalizeRequest(BaseModel):
@@ -226,6 +231,7 @@ class EvidencePromotionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     polarity: EvidencePolarity
+    assessment_dimension: EvidenceDimension = EvidenceDimension.GENERAL_CONTEXT
     claim: str = Field(min_length=10, max_length=2000)
     uncertainty_notes: str = Field(min_length=10, max_length=2000)
 
@@ -244,6 +250,7 @@ class EvidencePromotionResponse(BaseModel):
     object_outcome_id: UUID
     observation_id: UUID
     polarity: EvidencePolarity
+    assessment_dimension: EvidenceDimension
     claim: str
     uncertainty_notes: str
     promoted_by: UUID

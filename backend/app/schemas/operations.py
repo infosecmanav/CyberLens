@@ -9,6 +9,7 @@ from app.models.enums import (
     CaseStatus,
     DetectionKind,
     DetectionValidationStatus,
+    EvidenceDimension,
     IntelligenceChangeType,
     InvestigationStatus,
     InvestigationVerdict,
@@ -85,6 +86,7 @@ class EvidenceResponse(BaseModel):
     observation_id: UUID
     source_id: str
     polarity: str
+    assessment_dimension: EvidenceDimension
     claim: str
     uncertainty_notes: str | None
     observed_at: datetime

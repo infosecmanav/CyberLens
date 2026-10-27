@@ -7,7 +7,7 @@ def test_liveness(client: TestClient) -> None:
     assert response.json() == {
         "status": "ok",
         "service": "ThreatLens",
-        "version": "2.3.0",
+        "version": "2.4.0",
         "environment": "test",
         "database": None,
     }

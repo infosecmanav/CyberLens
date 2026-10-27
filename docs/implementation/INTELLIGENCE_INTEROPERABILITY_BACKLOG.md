@@ -30,6 +30,10 @@ Version 2.1 completes the passive infrastructure increment with fixture-tested S
 
 Version 2.2 completes the permitted extended-ecosystem increment with URLhaus and MalwareBazaar metadata lookup plus scheduled Feodo Tracker and OpenPhish feeds. TAXII endpoint validation blocks local/internal targets, mixed-success and quota-exhaustion behavior has API-level tests, and Google Safe Browsing is truthfully marked terms-restricted. Sources without a verified permitted path remain visible in the source matrix rather than being represented as integrations.
 
+Version 2.3 adds provenance-aware evidence reconciliation. It reports provider and independent provenance counts separately, collapses exact normalized shared-upstream references, preserves conflicts, persists assessment snapshots, and lets analysts recalculate completed investigations without recollecting provider data.
+
+Version 2.4 adds explicit analytical dimensions to evidence. Corroboration and conflict now require dimension alignment, automatic evidence uses a conservative normalized-observation mapping, and analyst promotions record their selected dimension. Evidence concerning different claims remains visible as multi-source context without inflating corroboration.
+
 Upstream verification on 2026-10-25 found that OpenTAXII documents TAXII 1.0 and 1.1 support and describes the project as feature-complete with bug-fix maintenance. It does not establish TAXII 2.x or 2.1 support. Any future TAXII 2.1 client will therefore use a separately verified implementation and compatibility suite.
 
 ## Slice 1 — research and contract fixtures

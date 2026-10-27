@@ -438,6 +438,7 @@ async def evidence(investigation_id: UUID, session: DatabaseSession) -> list[Evi
             observation_id=observation.id,
             source_id=source_id,
             polarity=item.polarity.value,
+            assessment_dimension=item.assessment_dimension.value,
             claim=item.claim,
             uncertainty_notes=item.uncertainty_notes,
             observed_at=observation.observed_at,

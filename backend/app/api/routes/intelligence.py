@@ -348,6 +348,7 @@ async def promote_import_object(
     evidence = Evidence(
         observation_id=observation.id,
         polarity=payload.polarity,
+        assessment_dimension=payload.assessment_dimension,
         claim=payload.claim,
         uncertainty_notes=payload.uncertainty_notes,
         analyst_reviewed_at=reviewed_at,
@@ -372,6 +373,7 @@ async def promote_import_object(
             "object_outcome_id": str(outcome.id),
             "observation_id": str(observation.id),
             "polarity": payload.polarity.value,
+            "assessment_dimension": payload.assessment_dimension.value,
         },
     )
     await session.commit()
@@ -381,6 +383,7 @@ async def promote_import_object(
         object_outcome_id=outcome.id,
         observation_id=observation.id,
         polarity=evidence.polarity,
+        assessment_dimension=evidence.assessment_dimension,
         claim=evidence.claim,
         uncertainty_notes=evidence.uncertainty_notes or "",
         promoted_by=user.id,

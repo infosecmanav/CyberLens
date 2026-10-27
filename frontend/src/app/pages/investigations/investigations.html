@@ -38,15 +38,23 @@
                   <article><strong>{{ summary.supporting_evidence }}</strong><span>Supporting</span></article>
                   <article><strong>{{ summary.conflicting_evidence }}</strong><span>Conflicting</span></article>
                 </div>
+                <div class="dimension-grid">
+                  @for (dimension of summary.dimension_summaries; track dimension.dimension) {
+                    <article [class.contested]="dimension.status === 'CONFLICTING_EVIDENCE'">
+                      <span>{{ friendly(dimension.dimension) }}</span><strong>{{ friendly(dimension.status) }}</strong>
+                      <small>{{ dimension.provider_count }} provider(s) · {{ dimension.provenance_group_count }} provenance group(s) · {{ dimension.supporting_evidence }} supporting</small>
+                    </article>
+                  }
+                </div>
                 @for (group of summary.shared_upstream_groups; track group.reference) {
-                  <div class="shared-provenance"><span>SHARED UPSTREAM</span><strong>{{ group.sources.join(' · ') }}</strong><code>{{ group.reference }}</code></div>
+                  <div class="shared-provenance"><span>SHARED UPSTREAM</span><strong>{{ group.sources.join(' · ') }} · {{ group.dimensions.join(' · ') }}</strong><code>{{ group.reference }}</code></div>
                 }
                 <ul>@for (limitation of summary.limitations; track limitation) { <li>{{ limitation }}</li> }</ul>
               </section>
             } @else if (item.status === 'COMPLETED') {
               <div class="workspace-message info">This earlier assessment has no reconciliation snapshot. Use <strong>Reconcile evidence</strong> to calculate it from persisted provenance.</div>
             }
-            @for (entry of evidence(); track entry.id) { <article class="finding"><span>{{ entry.source_id }} · {{ friendly(entry.polarity) }}</span><p>{{ entry.claim }}</p><small>{{ entry.uncertainty_notes }}</small></article> } @empty { <div class="empty-workspace">No evidence has been recorded.</div> }
+            @for (entry of evidence(); track entry.id) { <article class="finding"><span>{{ entry.source_id }} · {{ friendly(entry.assessment_dimension) }} · {{ friendly(entry.polarity) }}</span><p>{{ entry.claim }}</p><small>{{ entry.uncertainty_notes }}</small></article> } @empty { <div class="empty-workspace">No evidence has been recorded.</div> }
           }
           @if (activeTab() === 'timeline') { <div class="step-list">@for (event of item.events || []; track event['id']) { <article><i class="done"></i><div><span>{{ event['event_type'] }}</span><strong>{{ event['message'] }}</strong></div></article> }</div> }
           @if (activeTab() === 'ATT&CK') { <div class="empty-workspace">ATT&CK mappings appear only when supported by behavioral evidence. None are inferred from reputation alone.</div> }

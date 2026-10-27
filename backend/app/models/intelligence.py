@@ -20,6 +20,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.models.enums import (
     CollectionJobStatus,
     EntityType,
+    EvidenceDimension,
     EvidencePolarity,
     ExportStatus,
     ImplementationStatus,
@@ -172,6 +173,11 @@ class Evidence(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     polarity: Mapped[EvidencePolarity] = mapped_column(
         Enum(EvidencePolarity, native_enum=False, length=20), nullable=False
+    )
+    assessment_dimension: Mapped[EvidenceDimension] = mapped_column(
+        Enum(EvidenceDimension, native_enum=False, length=40),
+        default=EvidenceDimension.GENERAL_CONTEXT,
+        nullable=False,
     )
     claim: Mapped[str] = mapped_column(Text, nullable=False)
     uncertainty_notes: Mapped[str | None] = mapped_column(Text)

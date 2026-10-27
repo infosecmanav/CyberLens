@@ -3,6 +3,7 @@
 } @else {
   <form (submit)="submit($event)">
     <header><strong>Analyst evidence review</strong><button type="button" (click)="cancel()">Cancel</button></header>
+    <label><span>Analytical dimension</span><select [value]="assessmentDimension()" (change)="updateDimension($event)"><option value="MALICIOUSNESS">Maliciousness</option><option value="VULNERABILITY_CONTEXT">Vulnerability context</option><option value="MALWARE_ASSOCIATION">Malware association</option><option value="INFRASTRUCTURE_ASSOCIATION">Infrastructure association</option><option value="BEHAVIORAL_ASSOCIATION">Behavioral association</option><option value="THREAT_ACTOR_ATTRIBUTION">Threat actor attribution</option><option value="DETECTION_APPLICABILITY">Detection applicability</option><option value="GENERAL_CONTEXT">General context</option></select></label>
     <label><span>Polarity</span><select [value]="polarity()" (change)="updatePolarity($event)"><option value="SUPPORTS">Supports</option><option value="CONFLICTS">Conflicts</option><option value="CONTEXTUAL">Contextual</option></select></label>
     <label><span>Evidence claim</span><textarea required minlength="10" maxlength="2000" placeholder="State the bounded claim this observation supports…" [value]="claim()" (input)="updateClaim($event)"></textarea></label>
     <label><span>Uncertainty and limits</span><textarea required minlength="10" maxlength="2000" placeholder="Record provider scope, time limits, and alternative explanations…" [value]="uncertaintyNotes()" (input)="updateUncertainty($event)"></textarea></label>

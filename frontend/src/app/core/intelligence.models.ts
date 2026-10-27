@@ -138,8 +138,19 @@ export interface ImportBatchListResponse {
   offset: number;
 }
 
+export type EvidenceDimension =
+  | 'MALICIOUSNESS'
+  | 'VULNERABILITY_CONTEXT'
+  | 'MALWARE_ASSOCIATION'
+  | 'INFRASTRUCTURE_ASSOCIATION'
+  | 'BEHAVIORAL_ASSOCIATION'
+  | 'THREAT_ACTOR_ATTRIBUTION'
+  | 'DETECTION_APPLICABILITY'
+  | 'GENERAL_CONTEXT';
+
 export interface EvidencePromotionPayload {
   polarity: 'SUPPORTS' | 'CONFLICTS' | 'CONTEXTUAL';
+  assessment_dimension: EvidenceDimension;
   claim: string;
   uncertainty_notes: string;
 }

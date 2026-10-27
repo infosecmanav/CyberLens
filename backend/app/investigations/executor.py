@@ -9,7 +9,11 @@ from app.intelligence.collection import collect_entity, get_or_create_entity
 from app.intelligence.connectors.manager import ConnectorManager
 from app.intelligence.connectors.models import ConnectorOutcome
 from app.intelligence.normalization import normalize_entity
-from app.investigations.cross_validation import EvidenceSignal, reconcile_evidence
+from app.investigations.cross_validation import (
+    EvidenceSignal,
+    classify_evidence_dimension,
+    reconcile_evidence,
+)
 from app.models import (
     Assessment,
     AssessmentEvidence,
@@ -116,6 +120,7 @@ async def _validate(session: AsyncSession, investigation: Investigation) -> dict
     observations = await _observations(session, investigation.seed_entity_id)
     evidence_ids: list[str] = []
     for observation in observations:
+        assessment_dimension = classify_evidence_dimension(observation.observation_type)
         polarity = (
             EvidencePolarity.SUPPORTS
             if observation.observation_type == "KNOWN_EXPLOITED_VULNERABILITY"
@@ -136,6 +141,7 @@ async def _validate(session: AsyncSession, investigation: Investigation) -> dict
             evidence = Evidence(
                 observation_id=observation.id,
                 polarity=polarity,
+                assessment_dimension=assessment_dimension,
                 claim=claim,
                 uncertainty_notes=(
                     "Demonstration data cannot support a real-world threat conclusion."
@@ -150,6 +156,8 @@ async def _validate(session: AsyncSession, investigation: Investigation) -> dict
             )
             session.add(evidence)
             await session.flush()
+        elif evidence.promoted_by is None:
+            evidence.assessment_dimension = assessment_dimension
         evidence_ids.append(str(evidence.id))
     return {"evidence_created": len(evidence_ids), "evidence_ids": evidence_ids}
 
@@ -223,6 +231,9 @@ def _dimensions(
 ) -> dict[str, dict[str, str]]:
     provider_count = _summary_count(reconciliation, "provider_count")
     provenance_groups = _summary_count(reconciliation, "provenance_group_count")
+    corroborating_groups = _summary_count(
+        reconciliation, "supporting_provenance_groups"
+    )
     return {
         "maliciousness": {
             "level": "NOT_ASSESSED",
@@ -257,10 +268,11 @@ def _dimensions(
             ),
         },
         "independent_sources": {
-            "level": str(provenance_groups),
+            "level": str(corroborating_groups),
             "rationale": (
                 f"{provider_count} direct provider(s) resolve to {provenance_groups} distinct "
-                "provenance group(s); shared upstream reporting is counted once."
+                f"provenance group(s); the strongest aligned analytical dimension has "
+                f"{corroborating_groups} supporting group(s)."
             ),
         },
     }
@@ -292,6 +304,7 @@ async def _assess(session: AsyncSession, investigation: Investigation) -> dict[s
                 observation_id=str(observation.id),
                 source_id=source_id,
                 polarity=item.polarity,
+                assessment_dimension=item.assessment_dimension,
                 source_reference=observation.source_reference,
                 upstream_provenance=observation.upstream_provenance,
                 source_record_id=(
@@ -331,7 +344,7 @@ async def _assess(session: AsyncSession, investigation: Investigation) -> dict[s
     assessment.verdict = verdict
     assessment.confidence_dimensions = dimensions
     assessment.evidence_reconciliation = reconciliation
-    assessment.methodology = "HEURISTIC_V2_PROVENANCE_AWARE_UNCALIBRATED"
+    assessment.methodology = "HEURISTIC_V3_DIMENSION_ALIGNED_UNCALIBRATED"
     assessment.rationale = rationale
     assessment.limitations = sorted(
         set([*investigation.limitations, *reconciliation_limitations])

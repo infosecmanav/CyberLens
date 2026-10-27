@@ -14,6 +14,9 @@ export class StixEvidencePromotion {
   readonly promoted = output<void>();
   protected readonly open = signal(false);
   protected readonly polarity = signal<EvidencePromotionPayload['polarity']>('CONTEXTUAL');
+  protected readonly assessmentDimension = signal<
+    EvidencePromotionPayload['assessment_dimension']
+  >('GENERAL_CONTEXT');
   protected readonly claim = signal('');
   protected readonly uncertaintyNotes = signal('');
   protected readonly loading = signal(false);
@@ -38,6 +41,12 @@ export class StixEvidencePromotion {
     this.polarity.set((event.target as HTMLSelectElement).value as EvidencePromotionPayload['polarity']);
   }
 
+  protected updateDimension(event: Event): void {
+    this.assessmentDimension.set(
+      (event.target as HTMLSelectElement).value as EvidencePromotionPayload['assessment_dimension'],
+    );
+  }
+
   protected updateClaim(event: Event): void {
     this.claim.set((event.target as HTMLTextAreaElement).value);
   }
@@ -53,6 +62,7 @@ export class StixEvidencePromotion {
     this.error.set(null);
     this.intelligence.promoteImportObject(this.importId(), this.outcomeId(), {
       polarity: this.polarity(),
+      assessment_dimension: this.assessmentDimension(),
       claim: this.claim().trim(),
       uncertainty_notes: this.uncertaintyNotes().trim(),
     }).subscribe({

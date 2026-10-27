@@ -2,7 +2,7 @@
 
 Date: 2026-10-26
 
-This plan maps the master implementation specification to reviewable ThreatLens increments. The work is complete through Wave 10. Provider status remains capability-specific: a source can be inventoried, fixture-tested, awaiting a key, publicly feed-capable, restricted, or still under investigation without being presented as live.
+This plan maps the master implementation specification to reviewable ThreatLens increments. The work is complete through Wave 12. Provider status remains capability-specific: a source can be inventoried, fixture-tested, awaiting a key, publicly feed-capable, restricted, or still under investigation without being presented as live.
 
 | Wave | Delivered increment | Primary evidence |
 | ---: | --- | --- |
@@ -17,6 +17,8 @@ This plan maps the master implementation specification to reviewable ThreatLens 
 | 8 | Evidence-gated Sigma, SPL, and KQL candidates with validation states | `PHASE_3_8_REPORT.md` |
 | 9 | Cases, tasks, nine playbooks, approvals, audit, and dry-run actions | `PHASE_3_8_REPORT.md` |
 | 10 | Monitoring, security hardening, responsive console, release validation, and source truthfulness | `WAVE_10_REPORT.md` |
+| 11 | Provenance-aware evidence reconciliation and shared-upstream collapse | `ITERATION_2_3_CROSS_VALIDATION.md` |
+| 12 | Analytical-dimension alignment for corroboration and conflict | `ITERATION_2_4_DIMENSION_ALIGNMENT.md` |
 
 ## Delivery rules
 
